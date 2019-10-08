@@ -14,7 +14,6 @@ steps:
   displayName: 'Use .Net Core sdk 3.0.100'
   inputs:
     version: '3.0.100'
-    includePreviewVersions: true
 
 - task: PowerShell@2
   displayName: 'Global Json'
