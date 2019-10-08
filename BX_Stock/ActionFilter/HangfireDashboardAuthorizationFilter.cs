@@ -14,9 +14,9 @@ namespace BX_Stock
         public bool Authorize([NotNull] DashboardContext context)
         {
             var httpContext = context.GetHttpContext();
-            var userRole = httpContext.User.FindFirst(ClaimTypes.Role)?.Value;
 
-            return true;
+            // Allow all authenticated users to see the Dashboard (potentially dangerous).
+            return httpContext.User.Identity.IsAuthenticated;
         }
     }
 }
