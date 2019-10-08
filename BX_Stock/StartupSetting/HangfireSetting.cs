@@ -31,7 +31,7 @@ namespace BX_Stock
 
             TaskProvider taskProvider = (TaskProvider)serviceProvider.GetService(typeof(ITaskProvider));
 
-            taskProvider.RecurringTask<ITSECAPIService>("測試", x => x.Test(), "* * * * * *");
+            taskProvider.RecurringTask<ITSECAPIService>("測試", x => x.Test(), Cron.Daily(0));
         }
     }
 }
