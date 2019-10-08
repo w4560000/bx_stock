@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BX_Stock.Models.Entity
 {
-    public partial class bxstockContext : DbContext
+    public partial class BxstockContext : DbContext
     {
-        public bxstockContext()
+        public BxstockContext()
         {
         }
 
-        public bxstockContext(DbContextOptions<bxstockContext> options)
+        public BxstockContext(DbContextOptions<BxstockContext> options)
             : base(options)
         {
         }
@@ -19,11 +19,6 @@ namespace BX_Stock.Models.Entity
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=bxsqlserver.database.windows.net;Database=bxstock;User Id=bingxiang;Password=Aa334567;");
-            }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -42,7 +37,7 @@ namespace BX_Stock.Models.Entity
                     .IsFixedLength();
             });
 
-            OnModelCreatingPartial(modelBuilder);
+            this.OnModelCreatingPartial(modelBuilder);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

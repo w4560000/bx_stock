@@ -1,8 +1,7 @@
+using BX_Stock.Service;
 using Hangfire;
-using Hangfire.MemoryStorage;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -23,12 +22,22 @@ namespace BX_Stock
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-            services.AddHangfire(configuration => configuration.UseMemoryStorage());
+
+            // DI
+            services.AddSingleton<ITaskProvider, TaskProvider>();
+            services.AddSingleton<ITSECAPIService, TSECAPIService>();
+
+            // 註冊Hangfire排程
+            services.SettingHangfire();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
+            // 設定Hangfire排程方法
+            app.UseHangfireServer();
+            HangfireSetting.SettingHangfire(serviceProvider);
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -53,18 +62,11 @@ namespace BX_Stock
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
 
-            app.UseHangfireServer();
-            app.UseHangfireDashboard();
-
-            app.Map("/index ", r =>
-              {
-                  r.Run(context =>
-                  {
-                      // 任務每分鐘執行一次
-                      RecurringJob.AddOrUpdate(() => Console.WriteLine($" ASP.NET Core LineZero "), Cron.Minutely());
-                      return context.Response.WriteAsync(" ok ");
-                  });
-              });
+            // 設定hangfire儀表板
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+            });
         }
     }
 }
