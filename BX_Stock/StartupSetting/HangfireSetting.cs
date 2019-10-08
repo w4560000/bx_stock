@@ -27,7 +27,7 @@ namespace BX_Stock
         /// <param name="services">服務</param>
         public static void SettingHangfire(IServiceProvider serviceProvider)
         {
-            GlobalConfiguration.Configuration.UseActivator(new HangfireJobActivator(serviceProvider));
+            //GlobalConfiguration.Configuration.UseActivator(new HangfireJobActivator(serviceProvider));
 
             TaskProvider taskProvider = (TaskProvider)serviceProvider.GetService(typeof(ITaskProvider));
 

@@ -65,6 +65,7 @@ namespace BX_Stock
             // ³]©whangfire»öªíªO
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
+                StatsPollingInterval = 10000,
                 Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
             });
         }
