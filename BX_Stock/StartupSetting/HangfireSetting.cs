@@ -1,7 +1,6 @@
 ﻿using BX_Stock.Service;
 using Hangfire;
-using Hangfire.MemoryStorage;
-using Hangfire.SqlServer;
+using Hangfire.SQLite;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -18,7 +17,8 @@ namespace BX_Stock
         /// <param name="services">服務集合</param>
         public static void SettingHangfire(this IServiceCollection services)
         {
-            services.AddHangfire(configuration => configuration.UseSqlServerStorage(GlobalParam.DbConnection));
+            string SqliteSource = "Filename=./BXStockHangfire.db;";
+            services.AddHangfire(configuration => configuration.UseSQLiteStorage(SqliteSource));
         }
 
         /// <summary>
