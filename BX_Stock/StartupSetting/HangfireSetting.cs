@@ -17,7 +17,7 @@ namespace BX_Stock
         /// <param name="services">服務集合</param>
         public static void SettingHangfire(this IServiceCollection services)
         {
-            string SqliteSource = "Filename=./BXStockHangfire.db;";
+            string SqliteSource = "Filename=./APP_Data/BXStockHangfire.db;";
             services.AddHangfire(configuration => configuration.UseSQLiteStorage(SqliteSource));
         }
 
