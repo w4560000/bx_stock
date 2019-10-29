@@ -15,11 +15,11 @@ namespace BX_Stock.Controllers
     {
         private readonly ILogger<HomeController> Logger;
         
-        private readonly ITSECAPIService TSECAPIService;
+        private readonly ITwseAPIService TSECAPIService;
 
         public HomeController(
             ILogger<HomeController> logger,
-            ITSECAPIService tSECAPIService)
+            ITwseAPIService tSECAPIService)
         {
             this.Logger = logger;
             this.TSECAPIService = tSECAPIService;

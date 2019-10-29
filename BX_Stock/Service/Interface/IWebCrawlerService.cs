@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 
 namespace BX_Stock.Service
 {
-    public interface ITSECAPIService
+    public interface IWebCrawlerService
     {
-        public void Test();
+        Task GetDataAsync(string url);
     }
 }

@@ -1,3 +1,4 @@
+using AutoMapper;
 using BX_Stock.Service;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
@@ -6,6 +7,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Text;
+using System.Text.Json;
 
 namespace BX_Stock
 {
@@ -13,6 +16,8 @@ namespace BX_Stock
     {
         public Startup(IConfiguration configuration)
         {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             this.Configuration = configuration;
         }
 
@@ -23,9 +28,14 @@ namespace BX_Stock
         {
             services.AddControllersWithViews();
 
+            // 註冊AutoMapper
+            services.SetAutoMapper();
+
             // DI
             services.AddSingleton<ITaskProvider, TaskProvider>();
-            services.AddSingleton<ITSECAPIService, TSECAPIService>();
+            services.AddScoped<IBaseApiService, BaseApiService>();
+            services.AddScoped<IWebCrawlerService, WebCrawlerService>();
+            services.AddScoped<ITwseAPIService, TwseAPIService>();
 
             // 註冊Hangfire排程
             services.SettingHangfire();
@@ -34,14 +44,6 @@ namespace BX_Stock
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
-
-            // 設定hangfire儀表板
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                StatsPollingInterval = 10000,
-                Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
-            });
-
             // 設定Hangfire排程方法
             app.UseHangfireServer();
             HangfireSetting.SettingHangfire(serviceProvider);
@@ -70,6 +72,12 @@ namespace BX_Stock
                     pattern: "{controller=Home}/{action=Index}/{id?}");
             });
 
+            // 設定hangfire儀表板
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                StatsPollingInterval = 10000,
+                Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+            });
         }
     }
 }
