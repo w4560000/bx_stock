@@ -1,4 +1,6 @@
-﻿namespace BX_Stock.Models.Dto.TwseDto
+﻿using System;
+
+namespace BX_Stock.Models.Dto.TwseDto
 {
     public class StockDayDto
     {
@@ -13,9 +15,9 @@
         public string Date { get; set; }
 
         /// <summary>
-        /// 個股標題
+        /// 個股代號
         /// </summary>
-        public string Title { get; set; }
+        public string StockNo { get; set; }
 
         /// <summary>
         /// 個股資訊

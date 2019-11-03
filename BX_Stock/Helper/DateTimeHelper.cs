@@ -1,0 +1,44 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace BX_Stock.Helper
+{
+    public static class DateTimeHelper
+    {
+        public static IEnumerable<DateTime> EachDay(DateTime from, DateTime thru)
+        {
+            for (DateTime day = from.Date; day.Date <= thru.Date; day = day.AddDays(1))
+                yield return day;
+        }
+
+        public static IEnumerable<DateTime> EachMonth(DateTime from, DateTime thru)
+        {
+            for (DateTime month = from.Date; month.Date <= thru.Date || month.Month == thru.Month; month = month.AddMonths(1))
+                yield return month;
+        }
+
+        public static IEnumerable<DateTime> EachDayTo(this DateTime dateFrom, DateTime dateTo)
+        {
+            return EachDay(dateFrom, dateTo);
+        }
+
+        public static IEnumerable<DateTime> EachMonthTo(this DateTime dateFrom, DateTime dateTo)
+        {
+            return EachMonth(dateFrom, dateTo);
+        }
+
+        /// <summary>
+        /// DateTime轉換 民國轉西元
+        /// </summary>
+        /// <param name="dateTimeOfROCType"></param>
+        /// <returns></returns>
+        public static string ConvertToADType(this string dateTimeOfROCType)
+        {
+            string[] date = dateTimeOfROCType.Split('/');
+            date[0] = (Convert.ToInt32(date.FirstOrDefault()) + 1911).ToString();
+
+            return string.Join('/', date);
+        }
+    }
+}

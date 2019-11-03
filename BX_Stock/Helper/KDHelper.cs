@@ -1,5 +1,7 @@
-﻿using System;
+﻿using BX_Stock.Models.Entity;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace BX_Stock.Helper
 {

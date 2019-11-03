@@ -1,4 +1,5 @@
-﻿using BX_Stock.Service;
+﻿using BX_Stock.Helper;
+using BX_Stock.Service;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BX_Stock.Controllers
@@ -14,7 +15,9 @@ namespace BX_Stock.Controllers
 
         public IActionResult Index()
         {
-            var a = this.TwseAPIService.GetStockData();
+            //var a = this.TwseAPIService.GetStockData();
+
+            this.TwseAPIService.Test3037();
 
             return this.View();
         }

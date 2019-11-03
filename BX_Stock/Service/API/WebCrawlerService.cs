@@ -14,8 +14,16 @@ namespace BX_Stock.Service
     /// </summary>
     public class WebCrawlerService : IWebCrawlerService
     {
+        /// <summary>
+        /// HtmlParser
+        /// </summary>
         private static readonly HtmlParser _parser = new HtmlParser();
 
+        /// <summary>
+        /// 非同步 httpWebRequest
+        /// </summary>
+        /// <param name="uri">uri</param>
+        /// <returns>response</returns>
         private async Task<string> GetAsync(string uri)
         {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
@@ -27,7 +35,12 @@ namespace BX_Stock.Service
             return await reader.ReadToEndAsync();
         }
 
-        public async Task GetDataAsync(string url)
+        /// <summary>
+        /// 爬取全部股票代號
+        /// </summary>
+        /// <param name="url">URL</param>
+        /// <returns>全部股票代號</returns>
+        public async Task<List<StockNoDto>> GetAllStockNoAsync(string url)
         {
             var htmlContent = await this.GetAsync(url);
             var document = _parser.ParseDocument(htmlContent);
@@ -58,6 +71,8 @@ namespace BX_Stock.Service
                     break;
                 }
             }
+
+            return stockNoDto;
         }
     }
 }

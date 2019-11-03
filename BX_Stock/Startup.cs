@@ -1,14 +1,14 @@
-using AutoMapper;
+using BX_Stock.Models.Entity;
 using BX_Stock.Service;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Text;
-using System.Text.Json;
 
 namespace BX_Stock
 {
@@ -27,6 +27,10 @@ namespace BX_Stock
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
+            services.AddDbContext<StockContext>(options =>
+            {
+                options.UseSqlServer(this.Configuration.GetConnectionString("DefaultConnection"));
+            });
 
             // µù¥UAutoMapper
             services.SetAutoMapper();

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace BX_Stock.Models.Dto.TwseDto
 {
@@ -11,7 +12,7 @@ namespace BX_Stock.Models.Dto.TwseDto
         /// 日期
         /// </summary>
         [Display(Name = "日期")]
-        public string Date { get; set; }
+        public DateTime Date { get; set; }
 
         /// <summary>
         /// 成交股數
