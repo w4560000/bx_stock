@@ -1,6 +1,7 @@
 ﻿using BX_Stock.Service;
 using Hangfire;
 using Hangfire.SQLite;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 
@@ -15,10 +16,9 @@ namespace BX_Stock
         /// 載入
         /// </summary>
         /// <param name="services">服務集合</param>
-        public static void SettingHangfire(this IServiceCollection services)
+        public static void SettingHangfire(this IServiceCollection services , IConfiguration configuration)
         {
-            string SqliteSource = "Filename=./APP_Data/BXStockHangfire.db;";
-            services.AddHangfire(configuration => configuration.UseSQLiteStorage(SqliteSource));
+            services.AddHangfire(config => config.UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection")));
         }
 
         /// <summary>
@@ -31,7 +31,10 @@ namespace BX_Stock
 
             TaskProvider taskProvider = (TaskProvider)serviceProvider.GetService(typeof(ITaskProvider));
 
-            //taskProvider.RecurringTask<ITwseAPIService>("測試", x => x.Test(), Cron.Daily(0));
+            taskProvider.RecurringTask<ITwseAPIService>("第一次新增個股代碼", x => x.FirstInsertStockNo(), Cron.Monthly());
+
+
+            //taskProvider.RecurringTask<ITwseAPIService>("測試", x => x.Test1515(), Cron.Monthly());
         }
     }
 }

@@ -48,9 +48,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="App_Data\BXStockHangfire.db">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="BXStock.sqlite">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

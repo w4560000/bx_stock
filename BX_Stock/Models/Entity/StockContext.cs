@@ -38,6 +38,8 @@ namespace BX_Stock.Models.Entity
                     .IsUnicode(false)
                     .IsFixedLength();
 
+                entity.Property(e => e.IsListed).HasColumnName("isListed");
+
                 entity.Property(e => e.StockName)
                     .IsRequired()
                     .HasMaxLength(10)
@@ -71,6 +73,14 @@ namespace BX_Stock.Models.Entity
                     .HasColumnName("DIF")
                     .HasColumnType("decimal(9, 3)");
 
+                entity.Property(e => e.Ema12)
+                    .HasColumnName("EMA12")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Ema26)
+                    .HasColumnName("EMA26")
+                    .HasColumnType("decimal(9, 3)");
+
                 entity.Property(e => e.HighestPrice).HasColumnType("decimal(9, 2)");
 
                 entity.Property(e => e.K).HasColumnType("decimal(9, 3)");
@@ -84,7 +94,7 @@ namespace BX_Stock.Models.Entity
                     .HasColumnType("decimal(9, 3)");
             });
 
-            OnModelCreatingPartial(modelBuilder);
+            this.OnModelCreatingPartial(modelBuilder);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

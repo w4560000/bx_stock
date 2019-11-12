@@ -1,4 +1,5 @@
 ﻿using BX_Stock.Models.Dto;
+using BX_Stock.Models.Entity;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -10,10 +11,15 @@ namespace BX_Stock.Service
     public interface IWebCrawlerService
     {
         /// <summary>
-        /// 爬取全部股票代號
+        /// 爬取現有上市的股票代號
         /// </summary>
-        /// <param name="url">URL</param>
-        /// <returns>全部股票代號</returns>
-        Task<List<StockNoDto>> GetAllStockNoAsync(string url);
+        /// <returns>現有上市的股票代號</returns>
+        Task<List<Stock>> GetAllListedStockNoAsync();
+
+        /// <summary>
+        /// 爬取現有上櫃的股票代號
+        /// </summary>
+        /// <returns>現有上櫃的股票代號</returns>
+        Task<List<Stock>> GetAllCabinetStockNoAsync();
     }
 }

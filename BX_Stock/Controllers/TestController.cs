@@ -15,9 +15,7 @@ namespace BX_Stock.Controllers
 
         public IActionResult Index()
         {
-            //var a = this.TwseAPIService.GetStockData();
-
-            this.TwseAPIService.Test3037();
+            this.TwseAPIService.TestInsert1515();
 
             return this.View();
         }

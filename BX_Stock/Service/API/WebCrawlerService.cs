@@ -1,6 +1,6 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
-using BX_Stock.Models.Dto;
+using BX_Stock.Models.Entity;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -36,39 +36,91 @@ namespace BX_Stock.Service
         }
 
         /// <summary>
-        /// 爬取全部股票代號
+        /// 爬取現有上市的股票代號
         /// </summary>
-        /// <param name="url">URL</param>
-        /// <returns>全部股票代號</returns>
-        public async Task<List<StockNoDto>> GetAllStockNoAsync(string url)
+        /// <returns>現有上市的股票代號</returns>
+        public async Task<List<Stock>> GetAllListedStockNoAsync()
         {
-            var htmlContent = await this.GetAsync(url);
+            var htmlContent = await this.GetAsync(TwseApiUrl.GetAllListedStockNo);
             var document = _parser.ParseDocument(htmlContent);
 
             var trCount = document.QuerySelectorAll("tr");
 
-            List<StockNoDto> stockNoDto = new List<StockNoDto>();
+            List<Stock> stockNoDto = new List<Stock>();
+            bool nextRowGetStock = false;
 
             foreach (IElement element in trCount)
             {
                 IElement tdB = element.QuerySelector("td > b");
 
+                // 從股票底下開始爬上市股票
+                if (!nextRowGetStock && tdB != null && tdB.InnerHtml.Contains("股票"))
+                {
+                    nextRowGetStock = true;
+                    continue;
+                }
+
                 // 過濾網頁 Td的title 只抓個股資料
-                if (tdB == null)
+                if (nextRowGetStock)
+                {
+                    if (tdB is null)
+                    {
+                        IElement tdFirstChild = element.QuerySelector("td:nth-child(1)");
+                        string[] data = tdFirstChild.InnerHtml.Split("　");
+                        stockNoDto.Add(new Stock() { StockNo = data[0], StockName = data[1], IsListed = true });
+                    }
+
+                    // 爬到上市認購(售)權證那欄 代表上市股票已全部爬完
+                    else if (tdB.InnerHtml.Contains("上市認購(售)權證"))
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return stockNoDto;
+        }
+
+        /// <summary>
+        /// 爬取現有上櫃的股票代號
+        /// </summary>
+        /// <returns>現有上櫃的股票代號</returns>
+        public async Task<List<Stock>> GetAllCabinetStockNoAsync()
+        {
+            var htmlContent = await this.GetAsync(TwseApiUrl.GetAllCabinetStockNo);
+            var document = _parser.ParseDocument(htmlContent);
+
+            var trCount = document.QuerySelectorAll("tr");
+
+            List<Stock> stockNoDto = new List<Stock>();
+            bool nextRowGetStock = false;
+
+            foreach (IElement element in trCount)
+            {
+                IElement tdB = element.QuerySelector("td > b");
+
+                // 從股票底下開始爬上櫃股票
+                if (!nextRowGetStock && tdB != null && tdB.InnerHtml.Contains("股票"))
+                {
+                    nextRowGetStock = true;
+                    continue;
+                }
+
+                if (nextRowGetStock)
                 {
                     IElement tdFirstChild = element.QuerySelector("td:nth-child(1)");
 
-                    if (!tdFirstChild.InnerHtml.Contains("有價證券代號及名稱"))
+                    if (tdB is null)
                     {
                         string[] data = tdFirstChild.InnerHtml.Split("　");
-                        stockNoDto.Add(new StockNoDto() { StockNo = data[0], StockName = data[1] });
+                        stockNoDto.Add(new Stock() { StockNo = data[0], StockName = data[1], IsListed = false });
                     }
-                }
 
-                // 只抓上市個股 不抓權證
-                if (tdB != null && tdB.InnerHtml.Contains("上市認購(售)權證"))
-                {
-                    break;
+                    // 爬到特別股那欄 代表上櫃股票已全部爬完
+                    else if (tdB.InnerHtml.Contains("特別股"))
+                    {
+                        break;
+                    }
                 }
             }
 

@@ -14,10 +14,12 @@ namespace BX_Stock.Models.Entity
         public decimal ClosingPrice { get; set; }
         public decimal Change { get; set; }
         public int Transaction { get; set; }
-        public decimal? K { get; set; }
-        public decimal? D { get; set; }
-        public decimal? Dif { get; set; }
-        public decimal? Dea { get; set; }
-        public decimal? Osc { get; set; }
+        public decimal K { get; set; }
+        public decimal D { get; set; }
+        public decimal Ema12 { get; set; }
+        public decimal Ema26 { get; set; }
+        public decimal Dif { get; set; }
+        public decimal Dea { get; set; }
+        public decimal Osc { get; set; }
     }
 }

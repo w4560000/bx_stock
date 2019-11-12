@@ -42,7 +42,7 @@ namespace BX_Stock
             services.AddScoped<ITwseAPIService, TwseAPIService>();
 
             // µù¥UHangfire±Æµ{
-            services.SettingHangfire();
+            services.SettingHangfire(this.Configuration);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

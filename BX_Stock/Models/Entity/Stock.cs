@@ -7,5 +7,6 @@ namespace BX_Stock.Models.Entity
     {
         public string StockNo { get; set; }
         public string StockName { get; set; }
+        public bool IsListed { get; set; }
     }
 }
