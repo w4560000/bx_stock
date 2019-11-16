@@ -49,9 +49,18 @@ namespace BX_Stock
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
+            app.UseStaticFiles();
+
             // 設定Hangfire排程方法
             app.UseHangfireServer(new BackgroundJobServerOptions { WorkerCount = 1 });
             HangfireSetting.SettingHangfire(serviceProvider);
+
+            // 設定hangfire儀表板
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                StatsPollingInterval = 10000,
+                Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
+            });
 
             if (env.IsDevelopment())
             {
@@ -64,7 +73,7 @@ namespace BX_Stock
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
+
 
             app.UseRouting();
 
@@ -75,13 +84,6 @@ namespace BX_Stock
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller=Home}/{action=Index}/{id?}");
-            });
-
-            // 設定hangfire儀表板
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                StatsPollingInterval = 10000,
-                Authorization = new[] { new HangfireDashboardAuthorizationFilter() },
             });
         }
     }
