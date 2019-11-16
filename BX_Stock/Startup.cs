@@ -74,7 +74,7 @@ namespace BX_Stock
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Home}/{action=Index}/{id?}");
+                    pattern: "{controller=Test}/{action=Index}/{id?}");
             });
 
             // ³]©whangfire»öªíªO
