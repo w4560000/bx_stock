@@ -1,6 +1,8 @@
 ﻿using BX_Stock.Helper;
+using BX_Stock.Models.Entity;
 using BX_Stock.Service;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 namespace BX_Stock.Controllers
 {
@@ -10,14 +12,17 @@ namespace BX_Stock.Controllers
 
         private readonly IStockService StockService;
 
-        public TestController(ITwseAPIService twseAPIService, IStockService stockService)
+        private readonly StockContext StockContext;
+        public TestController(ITwseAPIService twseAPIService, IStockService stockService, StockContext stockContext)
         {
             this.TwseAPIService = twseAPIService;
             this.StockService = stockService;
+            this.StockContext = stockContext;
         }
 
         public IActionResult Index()
         {
+            this.ViewData["Title"] = this.StockContext.Set<Stock>().FirstOrDefault().StockName;
             //this.TwseAPIService.ProcessStockScheduleFirst(1000, 1200);
 
             return this.View();
