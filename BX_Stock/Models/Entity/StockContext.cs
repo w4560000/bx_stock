@@ -25,7 +25,7 @@ namespace BX_Stock.Models.Entity
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=10.1.101.188;Database=Stock; integrated security=true;");
+                optionsBuilder.UseSqlServer("Server=10.1.101.188,1433;Database=Stock; integrated security=true;");
             }
         }
 
