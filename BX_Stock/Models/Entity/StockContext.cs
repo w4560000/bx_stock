@@ -17,6 +17,8 @@ namespace BX_Stock.Models.Entity
 
         public virtual DbSet<Stock> Stock { get; set; }
         public virtual DbSet<StockDay> StockDay { get; set; }
+        public virtual DbSet<StockMonth> StockMonth { get; set; }
+        public virtual DbSet<StockWeek> StockWeek { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -94,7 +96,101 @@ namespace BX_Stock.Models.Entity
                     .HasColumnType("decimal(9, 3)");
             });
 
-            this.OnModelCreatingPartial(modelBuilder);
+            modelBuilder.Entity<StockMonth>(entity =>
+            {
+                entity.HasKey(e => new { e.StockNo, e.Date });
+
+                entity.Property(e => e.StockNo)
+                    .HasColumnName("StockNO")
+                    .HasMaxLength(4)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.Property(e => e.Date).HasColumnType("datetime");
+
+                entity.Property(e => e.Change).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.ClosingPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.D).HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Dea)
+                    .HasColumnName("DEA")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Dif)
+                    .HasColumnName("DIF")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Ema12)
+                    .HasColumnName("EMA12")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Ema26)
+                    .HasColumnName("EMA26")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.HighestPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.K).HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.LowestPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.OpeningPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.Osc)
+                    .HasColumnName("OSC")
+                    .HasColumnType("decimal(9, 3)");
+            });
+
+            modelBuilder.Entity<StockWeek>(entity =>
+            {
+                entity.HasKey(e => new { e.StockNo, e.Date });
+
+                entity.Property(e => e.StockNo)
+                    .HasColumnName("StockNO")
+                    .HasMaxLength(4)
+                    .IsUnicode(false)
+                    .IsFixedLength();
+
+                entity.Property(e => e.Date).HasColumnType("datetime");
+
+                entity.Property(e => e.Change).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.ClosingPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.D).HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Dea)
+                    .HasColumnName("DEA")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Dif)
+                    .HasColumnName("DIF")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Ema12)
+                    .HasColumnName("EMA12")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.Ema26)
+                    .HasColumnName("EMA26")
+                    .HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.HighestPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.K).HasColumnType("decimal(9, 3)");
+
+                entity.Property(e => e.LowestPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.OpeningPrice).HasColumnType("decimal(9, 2)");
+
+                entity.Property(e => e.Osc)
+                    .HasColumnName("OSC")
+                    .HasColumnType("decimal(9, 3)");
+            });
+
+            OnModelCreatingPartial(modelBuilder);
         }
 
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder);

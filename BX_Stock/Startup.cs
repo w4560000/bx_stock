@@ -40,6 +40,7 @@ namespace BX_Stock
             services.AddScoped<IBaseApiService, BaseApiService>();
             services.AddScoped<IWebCrawlerService, WebCrawlerService>();
             services.AddScoped<ITwseAPIService, TwseAPIService>();
+            services.AddScoped<IStockService, StockService>();
 
             // 註冊Hangfire排程
             services.SettingHangfire(this.Configuration);
@@ -49,7 +50,7 @@ namespace BX_Stock
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
             // 設定Hangfire排程方法
-            app.UseHangfireServer();
+            app.UseHangfireServer(new BackgroundJobServerOptions { WorkerCount = 1 });
             HangfireSetting.SettingHangfire(serviceProvider);
 
             if (env.IsDevelopment())

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace BX_Stock.Models.Entity
 {
-    public partial class StockDay : IStockEntity
+    public partial class StockMonth : IStockEntity
     {
         public string StockNo { get; set; }
         public DateTime Date { get; set; }

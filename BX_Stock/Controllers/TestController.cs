@@ -8,14 +8,17 @@ namespace BX_Stock.Controllers
     {
         private readonly ITwseAPIService TwseAPIService;
 
-        public TestController(ITwseAPIService twseAPIService)
+        private readonly IStockService StockService;
+
+        public TestController(ITwseAPIService twseAPIService, IStockService stockService)
         {
             this.TwseAPIService = twseAPIService;
+            this.StockService = stockService;
         }
 
         public IActionResult Index()
         {
-            this.TwseAPIService.TestInsert1515();
+            //this.TwseAPIService.ProcessStockScheduleFirst(1000, 1200);
 
             return this.View();
         }

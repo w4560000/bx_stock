@@ -27,6 +27,13 @@ namespace BX_Stock.Controllers
 
         public IActionResult Index()
         {
+            this.Logger.LogTrace("This trace log from Home.Index()");
+            this.Logger.LogDebug("This debug log from Home.Index()");
+            this.Logger.LogInformation("This information log from Home.Index()");
+            this.Logger.LogWarning("This warning log from Home.Index()");
+            this.Logger.LogError("This error log from Home.Index()");
+            this.Logger.LogCritical("This critical log from Home.Index()");
+
             return this.View();
         }
 

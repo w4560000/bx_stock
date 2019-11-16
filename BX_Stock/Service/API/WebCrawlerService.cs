@@ -67,7 +67,7 @@ namespace BX_Stock.Service
                     {
                         IElement tdFirstChild = element.QuerySelector("td:nth-child(1)");
                         string[] data = tdFirstChild.InnerHtml.Split("　");
-                        stockNoDto.Add(new Stock() { StockNo = data[0], StockName = data[1], IsListed = true });
+                        stockNoDto.Add(new Stock() { StockNo = data[0].Split(" ")[0], StockName = data[1], IsListed = true });
                     }
 
                     // 爬到上市認購(售)權證那欄 代表上市股票已全部爬完
@@ -113,7 +113,7 @@ namespace BX_Stock.Service
                     if (tdB is null)
                     {
                         string[] data = tdFirstChild.InnerHtml.Split("　");
-                        stockNoDto.Add(new Stock() { StockNo = data[0], StockName = data[1], IsListed = false });
+                        stockNoDto.Add(new Stock() { StockNo = data[0].Split(" ")[0], StockName = data[1], IsListed = false });
                     }
 
                     // 爬到特別股那欄 代表上櫃股票已全部爬完

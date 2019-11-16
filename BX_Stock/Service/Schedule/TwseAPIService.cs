@@ -1,12 +1,11 @@
 ﻿using AutoMapper;
 using BX_Stock.Helper;
-using BX_Stock.Models.Dto;
 using BX_Stock.Models.Dto.TwseDto;
 using BX_Stock.Models.Entity;
+using EFCore.BulkExtensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace BX_Stock.Service
 {
@@ -16,6 +15,8 @@ namespace BX_Stock.Service
 
         private readonly IWebCrawlerService WebCrawlerService;
 
+        private readonly IStockService StockService;
+
         private readonly StockContext StockContext;
 
         private readonly IMapper Mapper;
@@ -23,49 +24,83 @@ namespace BX_Stock.Service
         public TwseAPIService(
             IBaseApiService baseApiService,
             IWebCrawlerService webCrawlerService,
+            IStockService stockService,
             StockContext stockContext,
             IMapper mapper)
         {
             this.BaseApiService = baseApiService;
             this.WebCrawlerService = webCrawlerService;
+            this.StockService = stockService;
             this.StockContext = stockContext;
             this.Mapper = mapper;
         }
 
         /// <summary>
-        /// 第一次建立個股資料
-        /// </summary>
-        public void FirstInsertStockNo()
-        {
-            List<Stock> AllStockNo = new List<Stock>();
-
-            // 爬取上市股票
-            AllStockNo.AddRange(this.WebCrawlerService.GetAllListedStockNoAsync().GetAwaiter().GetResult());
-
-            // 爬取上櫃股票
-            AllStockNo.AddRange(this.WebCrawlerService.GetAllCabinetStockNoAsync().GetAwaiter().GetResult());
-
-            this.StockContext.AddRange(AllStockNo);
-            this.StockContext.SaveChanges();
-        }
-
-        /// <summary>
-        /// 每日排程 撈取現有股號
-        /// 若撈取的資料與現有資料庫股號有差異 
+        /// 每日排程 撈取現有股號 (Schedule1)
+        /// 若撈取的資料與現有資料庫股號有差異
         /// 則移除下架的個股與相關資訊，並新增上架的個股與相關資訊
         /// </summary>
         /// <returns>股票代號清單</returns>
-        public void GetAllStockNo()
+        public void ProcessStockSchedule1()
         {
-            List<Stock> GetAllStockNo = this.WebCrawlerService
-                                            .GetAllListedStockNoAsync()
-                                            .GetAwaiter()
-                                            .GetResult();
+            List<Stock> allStockData = new List<Stock>();
+
+            // 爬取上市股票
+            allStockData.AddRange(this.WebCrawlerService.GetAllListedStockNoAsync().GetAwaiter().GetResult());
+
+            // 爬取上櫃股票
+            allStockData.AddRange(this.WebCrawlerService.GetAllCabinetStockNoAsync().GetAwaiter().GetResult());
+
+            List<Stock> currentDbStockData = this.StockContext.Set<Stock>().ToList();
+
+            List<string> allStockNo = allStockData.Select(s => s.StockNo).ToList();
+            List<string> currentDbStockNo = currentDbStockData.Select(s => s.StockNo).ToList();
+
+            // 目前DB沒有的個股，但市面上有的(新上市)，新增該股資料
+            List<string> insertStockNoList = allStockNo.Except(currentDbStockNo).ToList();
+            this.InsertStock(allStockData.Where(x => insertStockNoList.Contains(x.StockNo)).ToList());
+
+            //// 目前DB有的個股，但市面上沒有的(下市)，刪除該股在DB的資料
+            List<string> deleteStockNoList = currentDbStockNo.Except(allStockNo).ToList();
+            this.StockService.DeleteStockData(deleteStockNoList);
         }
 
-        public void TestInsert1515()
+        /// <summary>
+        /// (Schedule2)
+        /// </summary>
+        /// <returns>股票代號清單</returns>
+        public void ProcessStockScheduleFirst(int start, int end)
         {
-            this.GetStockHistoryData("1515");
+            List<Stock> currentDbStockData = this.StockContext.Set<Stock>().ToList();
+            List<string> currentDbStockNo = currentDbStockData.Select(s => s.StockNo)
+                                                              .Where(w=>  start <= Convert.ToInt32(w) && Convert.ToInt32(w) > end)
+                                                              .ToList();
+
+            // 撈11月份歷史資料
+            currentDbStockNo.ForEach(x => this.ProcessStockHistoryData(x));
+
+            // 計算週KD 月KD
+            currentDbStockNo.ForEach(x => this.StockService.ProcessStockWeekKD(x));
+            currentDbStockNo.ForEach(x => this.StockService.ProcessStockMonthKD(x));
+        }
+
+        /// <summary>
+        /// 新增個股資訊
+        /// </summary>
+        /// <param name="stockNoList">要新增的個股代號</param>
+        private void InsertStock(List<Stock> insertStockList)
+        {
+            List<string> insertStockNoList = insertStockList.Select(s => s.StockNo).ToList();
+
+            // 新增個股代號
+            this.StockContext.BulkInsert(insertStockList);
+
+            // 撈歷史資料
+            insertStockNoList.ForEach(x => this.ProcessStockHistoryData(x));
+
+            // 計算週KD 月KD
+            insertStockNoList.ForEach(x => this.StockService.ProcessStockWeekKD(x));
+            insertStockNoList.ForEach(x => this.StockService.ProcessStockMonthKD(x));
         }
 
         /// <summary>
@@ -74,15 +109,14 @@ namespace BX_Stock.Service
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
         /// <param name="endMonth">查詢結束時間</param>
-        public void GetStockHistoryData(string stockNo,string startMonth = "2010-01", string endMonth = "")
+        private void ProcessStockHistoryData(string stockNo, string startMonth = "2010-01", string endMonth = "2019-10")
         {
             DateTime twseDataStartMonth = DateTime.Parse(startMonth);
-            DateTime currentMonth = string.IsNullOrEmpty(endMonth) ?  DateTime.Now : DateTime.Parse(endMonth);
-            List<StockDay> result = new List<StockDay>();
+            DateTime currentMonth = string.IsNullOrEmpty(endMonth) ? DateTime.Now : DateTime.Parse(endMonth);
+            List<IStockEntity> result = new List<IStockEntity>();
 
             foreach (DateTime date in twseDataStartMonth.EachMonthTo(currentMonth))
             {
-                
                 StockDayDto stockDayDto = this.GetStockData(stockNo, date);
 
                 result.AddRange(this.Mapper.Map<List<StockDay>>(stockDayDto.Data));
@@ -119,6 +153,5 @@ namespace BX_Stock.Service
 
             return result;
         }
-
     }
 }

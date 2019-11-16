@@ -1,4 +1,5 @@
 ﻿using BX_Stock.Models.Entity;
+using BX_Stock.Service;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace BX_Stock.Helper
         /// </summary>
         /// <param name="stockDayList">個股資料</param>
         /// <param name="n">預設天數</param>
-        public static void CalcKD(this List<StockDay> stockDayList, int n = 9)
+        public static List<IStockEntity> CalcKD(this List<IStockEntity> stockDayList, int n = 9)
         {
             /*
                         第n天收盤價-最近n天內最低價
@@ -45,9 +46,9 @@ namespace BX_Stock.Helper
             }
 
             // 取得最近n天 最高價與最低價
-            static (decimal, decimal) GethighestPriceAndLowestPrice(int n, int currentIndex, List<StockDay> stockDayList)
+            static (decimal, decimal) GethighestPriceAndLowestPrice(int n, int currentIndex, List<IStockEntity> stockDayList)
             {
-                List<StockDay> recentStockData = stockDayList.GetRange(Math.Max(0, currentIndex +1 - n), currentIndex < 9 ? currentIndex + 1 : 9);
+                List<IStockEntity> recentStockData = stockDayList.GetRange(Math.Max(0, currentIndex +1 - n), currentIndex < 9 ? currentIndex + 1 : 9);
                 recentStockData.Sort((x, y) => { return x.LowestPrice.CompareTo(y.LowestPrice); });
                 decimal lowestPrice = recentStockData[0].LowestPrice;
 
@@ -73,6 +74,8 @@ namespace BX_Stock.Helper
                 stockDayList[i].K = Calc_K(closeNow, lowestPrice, highestPrice, beforeK);
                 stockDayList[i].D = Calc_D(stockDayList[i - 1].D, stockDayList[i].K);
             }
+
+            return stockDayList;
         }
     }
 }
