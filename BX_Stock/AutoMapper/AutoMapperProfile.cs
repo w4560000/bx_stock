@@ -55,7 +55,7 @@ namespace BX_Stock.AutoMapper
                             else
                             {
                                 // 證交所回傳的漲跌價差 若為0 則顯示 "X0.00" 若直接轉decimal會噴錯
-                                if (mapFrom.Data[i][j].Contains("X"))
+                                if (mapFrom.Data[i][j].Contains("X") || mapFrom.Data[i][j].Equals("--"))
                                 {
                                     prop.SetValue(result[i], 0);
                                 }

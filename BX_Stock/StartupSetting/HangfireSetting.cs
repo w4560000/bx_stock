@@ -31,8 +31,7 @@ namespace BX_Stock
 
             TaskProvider taskProvider = (TaskProvider)serviceProvider.GetService(typeof(ITaskProvider));
 
-            //taskProvider.RecurringTask<ITwseAPIService>("第一次新增個股代碼", x => x.FirstInsertStockNo(), Cron.Monthly());
-
+            taskProvider.RecurringTask<ITwseAPIService>("第一次新增個股代碼", x => x.ProcessStockScheduleFirst(2724, 3199), Cron.Monthly());
 
             //taskProvider.RecurringTask<ITwseAPIService>("測試", x => x.Test1515(), Cron.Monthly());
         }

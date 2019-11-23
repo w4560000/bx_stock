@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace BX_Stock.Service
 {
@@ -80,7 +81,7 @@ namespace BX_Stock.Service
         /// <param name="param">param</param>
         /// <param name="headers">header</param>
         /// <returns>回傳物件</returns>
-        public T Get<T,RequestParam>(string url, RequestParam param, Dictionary<string, string> headers = null)
+        public async Task<T> GetAsync<T,RequestParam>(string url, RequestParam param, Dictionary<string, string> headers = null)
         {
             string json = string.Empty;
             using (HttpClient client = new HttpClient())
@@ -92,10 +93,10 @@ namespace BX_Stock.Service
                 string requestParam = param.ConvertToGetMethodUrlParam();
 
                 // 發出 post 並取得結果
-                HttpResponseMessage response = client.GetAsync($"{url}?{requestParam}").Result;
+                HttpResponseMessage response = await client.GetAsync($"{url}?{requestParam}");
 
                 // 將回應結果內容取出並轉為 string 再透過 linqpad 輸出
-                json = response.Content.ReadAsStringAsync().Result;
+                json = await response.Content.ReadAsStringAsync();
             }
 
             T result = json.ToTypedObject<T>();

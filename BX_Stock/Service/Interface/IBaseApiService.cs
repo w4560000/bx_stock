@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BX_Stock.Service
 {
@@ -27,12 +28,11 @@ namespace BX_Stock.Service
         /// get 方法
         /// </summary>
         /// <typeparam name="T">回傳型態</typeparam>
-        /// <typeparam name="RequestParam">Url傳入參數型態</typeparam>
         /// <param name="url">url</param>
         /// <param name="param">param</param>
         /// <param name="headers">header</param>
         /// <returns>回傳物件</returns>
-        public T Get<T, RequestParam>(string url, RequestParam param, Dictionary<string, string> headers = null);
+        Task<T> GetAsync<T, RequestParam>(string url, RequestParam param, Dictionary<string, string> headers = null);
 
         /// <summary>
         /// post 方法

@@ -22,8 +22,8 @@ namespace BX_Stock.Controllers
 
         public IActionResult Index()
         {
-            this.ViewData["Title"] = this.StockContext.Set<Stock>().FirstOrDefault().StockName;
-            //this.TwseAPIService.ProcessStockScheduleFirst(1000, 1200);
+            //this.ViewData["Title"] = this.StockContext.Set<Stock>().FirstOrDefault().StockName;
+            //this.TwseAPIService.ProcessStockScheduleFirst(1204, 1210);
 
             return this.View();
         }

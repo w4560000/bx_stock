@@ -6,6 +6,7 @@ using EFCore.BulkExtensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BX_Stock.Service
 {
@@ -71,17 +72,20 @@ namespace BX_Stock.Service
         /// <returns>股票代號清單</returns>
         public void ProcessStockScheduleFirst(int start, int end)
         {
-            List<Stock> currentDbStockData = this.StockContext.Set<Stock>().ToList();
-            List<string> currentDbStockNo = currentDbStockData.Select(s => s.StockNo)
-                                                              .Where(w=>  start <= Convert.ToInt32(w) && Convert.ToInt32(w) > end)
-                                                              .ToList();
+            List<string> currentDbStockNo = this.StockContext.Set<Stock>().Select(s => s.StockNo).ToList();
+
+            List<int> insertStockNo = new List<int>();
+            currentDbStockNo.ForEach(x => insertStockNo.Add(Convert.ToInt32(x)));
+            insertStockNo = insertStockNo.Where(w => start <= w && w < end).ToList();
+            currentDbStockNo.Clear();
+            insertStockNo.ForEach(x => currentDbStockNo.Add(x.ToString()));
 
             // 撈11月份歷史資料
             currentDbStockNo.ForEach(x => this.ProcessStockHistoryData(x));
 
             // 計算週KD 月KD
-            currentDbStockNo.ForEach(x => this.StockService.ProcessStockWeekKD(x));
-            currentDbStockNo.ForEach(x => this.StockService.ProcessStockMonthKD(x));
+            //currentDbStockNo.ForEach(x => this.StockService.ProcessStockWeekKD(x));
+            //currentDbStockNo.ForEach(x => this.StockService.ProcessStockMonthKD(x));
         }
 
         /// <summary>
@@ -109,7 +113,7 @@ namespace BX_Stock.Service
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
         /// <param name="endMonth">查詢結束時間</param>
-        private void ProcessStockHistoryData(string stockNo, string startMonth = "2010-01", string endMonth = "2019-10")
+        private void ProcessStockHistoryData(string stockNo, string startMonth = "2010-01-04", string endMonth = "2019-10")
         {
             DateTime twseDataStartMonth = DateTime.Parse(startMonth);
             DateTime currentMonth = string.IsNullOrEmpty(endMonth) ? DateTime.Now : DateTime.Parse(endMonth);
@@ -117,7 +121,12 @@ namespace BX_Stock.Service
 
             foreach (DateTime date in twseDataStartMonth.EachMonthTo(currentMonth))
             {
-                StockDayDto stockDayDto = this.GetStockData(stockNo, date);
+                (StockDayDto stockDayDto, string stat) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
+
+                if(stat.Contains("沒有符合條件"))
+                {
+                    continue;
+                }
 
                 result.AddRange(this.Mapper.Map<List<StockDay>>(stockDayDto.Data));
             }
@@ -125,7 +134,7 @@ namespace BX_Stock.Service
             result.ForEach(f => f.StockNo = stockNo);
 
             // 計算KD
-            result.CalcKD();
+            //result.CalcKD();
 
             this.StockContext.AddRange(result);
             this.StockContext.SaveChanges();
@@ -135,7 +144,7 @@ namespace BX_Stock.Service
         /// 取得個股單月資訊
         /// </summary>
         /// <returns>個股單月資訊</returns>
-        private StockDayDto GetStockData(string stockNo, DateTime date)
+        private async Task<(StockDayDto, string)> GetStockDataAsync(string stockNo, DateTime date)
         {
             StockDayRequestParamDto test = new StockDayRequestParamDto()
             {
@@ -146,12 +155,12 @@ namespace BX_Stock.Service
             // 連續串證交所API 會被鎖IP，每隔三秒串一次
             System.Threading.Thread.Sleep(3000);
 
-            StockDayResponseDto stockData = this.BaseApiService
-                .Get<StockDayResponseDto, StockDayRequestParamDto>(TwseApiUrl.StockDay, test);
+            StockDayResponseDto stockData = await this.BaseApiService
+                .GetAsync<StockDayResponseDto, StockDayRequestParamDto>(TwseApiUrl.StockDay, test);
 
             StockDayDto result = this.Mapper.Map<StockDayDto>(stockData);
 
-            return result;
+            return (result, stockData.Stat);
         }
     }
 }
