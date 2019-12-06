@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using BX_Stock.Extension;
 using BX_Stock.Helper;
-using BX_Stock.Models.Dto.TwseDto;
+using BX_Stock.Models.Dto;
 using BX_Stock.Models.Entity;
 using System;
 using System.Reflection;
@@ -19,7 +19,7 @@ namespace BX_Stock.AutoMapper
         public AutoMapperProfile()
         {
             // twse個股資訊 轉換成dto
-            this.CreateMap<StockDayResponseDto, StockDayDto>()
+            this.CreateMap<TwseStockDayResponseDto, StockDayDto>()
                 .ForMember(dest => dest.Date, opts => opts.MapFrom(src => src.Date))
                 .ForMember(dest => dest.IsOK, opts => opts.MapFrom(src => src.Stat.Equals("OK")))
                 .ForMember(dest => dest.StockNo, opts => opts.MapFrom(src => src.Title.Trim()))
@@ -34,7 +34,7 @@ namespace BX_Stock.AutoMapper
         /// </summary>
         /// <param name="mapFrom">證交所回傳資料</param>
         /// <returns>個股Dto</returns>
-        private StockDayDetailDto[] ConvertStockDayDetail(StockDayResponseDto mapFrom)
+        private StockDayDetailDto[] ConvertStockDayDetail(TwseStockDayResponseDto mapFrom)
         {
             StockDayDetailDto[] result = new StockDayDetailDto[mapFrom.Data.Count];
 

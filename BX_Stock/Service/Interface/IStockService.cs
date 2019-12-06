@@ -8,21 +8,11 @@ namespace BX_Stock.Service
     public interface IStockService
     {
         /// <summary>
-        /// 計算週KD
+        /// 每日排程 撈取現有股號 (Schedule1)
+        /// 若撈取的資料與現有資料庫股號有差異
+        /// 則移除下架的個股與相關資訊，並新增上架的個股與相關資訊
         /// </summary>
-        /// <param name="stockNo">個股代號</param>
-        void ProcessStockWeekKD(string stockNo);
-
-        /// <summary>
-        /// 計算月KD
-        /// </summary>
-        /// <param name="stockNo">個股代號</param>
-        void ProcessStockMonthKD(string stockNo);
-
-        /// <summary>
-        /// 刪除個股資訊
-        /// </summary>
-        /// <param name="deleteStockNoList">欲刪除的個股代號清單</param>
-        void DeleteStockData(List<string> deleteStockNoList);
+        /// <returns>股票代號清單</returns>
+        void ProcessStockSchedule1();
     }
 }

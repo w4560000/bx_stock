@@ -1,6 +1,7 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
 using BX_Stock.Models.Entity;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -41,7 +42,7 @@ namespace BX_Stock.Service
         /// <returns>現有上市的股票代號</returns>
         public async Task<List<Stock>> GetAllListedStockNoAsync()
         {
-            var htmlContent = await this.GetAsync(TwseApiUrl.GetAllListedStockNo);
+            var htmlContent = await this.GetAsync(StockApiUrl.GetAllListedStockNo);
             var document = _parser.ParseDocument(htmlContent);
 
             var trCount = document.QuerySelectorAll("tr");
@@ -67,7 +68,7 @@ namespace BX_Stock.Service
                     {
                         IElement tdFirstChild = element.QuerySelector("td:nth-child(1)");
                         string[] data = tdFirstChild.InnerHtml.Split("　");
-                        stockNoDto.Add(new Stock() { StockNo = data[0].Split(" ")[0], StockName = data[1], IsListed = true });
+                        stockNoDto.Add(new Stock() { StockNo = Convert.ToInt32(data[0].Split(" ")[0]), StockName = data[1], IsListed = true });
                     }
 
                     // 爬到上市認購(售)權證那欄 代表上市股票已全部爬完
@@ -87,7 +88,7 @@ namespace BX_Stock.Service
         /// <returns>現有上櫃的股票代號</returns>
         public async Task<List<Stock>> GetAllCabinetStockNoAsync()
         {
-            var htmlContent = await this.GetAsync(TwseApiUrl.GetAllCabinetStockNo);
+            var htmlContent = await this.GetAsync(StockApiUrl.GetAllCabinetStockNo);
             var document = _parser.ParseDocument(htmlContent);
 
             var trCount = document.QuerySelectorAll("tr");
@@ -113,7 +114,7 @@ namespace BX_Stock.Service
                     if (tdB is null)
                     {
                         string[] data = tdFirstChild.InnerHtml.Split("　");
-                        stockNoDto.Add(new Stock() { StockNo = data[0].Split(" ")[0], StockName = data[1], IsListed = false });
+                        stockNoDto.Add(new Stock() { StockNo =  Convert.ToInt32(data[0].Split(" ")[0]), StockName = data[1], IsListed = false });
                     }
 
                     // 爬到特別股那欄 代表上櫃股票已全部爬完

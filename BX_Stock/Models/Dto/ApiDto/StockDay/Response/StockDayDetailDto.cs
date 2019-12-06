@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace BX_Stock.Models.Dto.TwseDto
+namespace BX_Stock.Models.Dto
 {
     /// <summary>
     /// 個股查詢詳細資訊Dto

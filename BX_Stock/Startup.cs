@@ -40,6 +40,7 @@ namespace BX_Stock
             services.AddScoped<IBaseApiService, BaseApiService>();
             services.AddScoped<IWebCrawlerService, WebCrawlerService>();
             services.AddScoped<ITwseAPIService, TwseAPIService>();
+            services.AddScoped<ITpexAPIService, TpexAPIService>();
             services.AddScoped<IStockService, StockService>();
 
             // µù¥UHangfire±Æµ{

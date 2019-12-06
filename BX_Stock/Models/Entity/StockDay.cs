@@ -6,7 +6,7 @@ namespace BX_Stock.Models.Entity
 {
     public partial class StockDay : IStockEntity
     {
-        public string StockNo { get; set; }
+        public int StockNo { get; set; }
         public DateTime Date { get; set; }
         public long TradeValue { get; set; }
         public decimal OpeningPrice { get; set; }

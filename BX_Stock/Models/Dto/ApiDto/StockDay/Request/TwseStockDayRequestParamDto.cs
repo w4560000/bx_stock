@@ -1,9 +1,9 @@
-﻿namespace BX_Stock.Models.Dto.TwseDto
+﻿namespace BX_Stock.Models.Dto
 {
     /// <summary>
-    /// 個股查詢Request參數
+    /// 證交所StockDay API requestParamDto
     /// </summary>
-    public class StockDayRequestParamDto
+    public class TwseStockDayRequestParamDto
     {
         /// <summary>
         /// 回傳格式

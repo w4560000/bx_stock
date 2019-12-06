@@ -1,6 +1,9 @@
 ﻿namespace BX_Stock.Service
 {
-    public interface ITwseAPIService
+    /// <summary>
+    /// 上櫃個股 interface
+    /// </summary>
+    public interface ITpexAPIService
     {
         /// <summary>
         /// (Schedule2)
@@ -9,11 +12,11 @@
         void ProcessStockScheduleFirst(int start, int end);
 
         /// <summary>
-        /// 新增上市個股歷史資料
+        /// 新增上櫃個股歷史資料
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
         /// <param name="endMonth">查詢結束時間</param>
-        void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2019-10");
+        void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01", string endMonth = "2019-10");
     }
 }

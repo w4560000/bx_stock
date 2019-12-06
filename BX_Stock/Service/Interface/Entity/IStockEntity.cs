@@ -7,7 +7,7 @@ namespace BX_Stock.Service
 {
     public interface IStockEntity
     {
-        string StockNo { get; set; }
+        int StockNo { get; set; }
         DateTime Date { get; set; }
         long TradeValue { get; set; }
         decimal OpeningPrice { get; set; }

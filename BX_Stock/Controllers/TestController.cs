@@ -10,19 +10,26 @@ namespace BX_Stock.Controllers
     {
         private readonly ITwseAPIService TwseAPIService;
 
+        private readonly ITpexAPIService TpexAPIService;
+
         private readonly IStockService StockService;
 
         private readonly StockContext StockContext;
-        public TestController(ITwseAPIService twseAPIService, IStockService stockService, StockContext stockContext)
+        public TestController(
+            ITwseAPIService twseAPIService, 
+            IStockService stockService, 
+            StockContext stockContext, 
+            ITpexAPIService tpexAPIService)
         {
             this.TwseAPIService = twseAPIService;
             this.StockService = stockService;
             this.StockContext = stockContext;
+            this.TpexAPIService = tpexAPIService;
         }
 
         public IActionResult Index()
         {
-            //this.ViewData["Title"] = this.StockContext.Set<Stock>().FirstOrDefault().StockName;
+            //this.TpexAPIService.ProcessStockHistoryData(4995);
             //this.TwseAPIService.ProcessStockScheduleFirst(1204, 1210);
 
             return this.View();

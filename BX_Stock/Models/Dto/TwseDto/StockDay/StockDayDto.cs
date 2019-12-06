@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BX_Stock.Models.Dto.TwseDto
+namespace BX_Stock.Models.Dto
 {
     public class StockDayDto
     {

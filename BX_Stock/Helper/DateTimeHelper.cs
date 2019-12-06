@@ -46,14 +46,26 @@ namespace BX_Stock.Helper
         /// <summary>
         /// DateTime轉換 民國轉西元
         /// </summary>
-        /// <param name="dateTimeOfROCType"></param>
+        /// <param name="dateTimeOfTaiwanType"></param>
         /// <returns></returns>
-        public static string ConvertToADType(this string dateTimeOfROCType)
+        public static string ConvertToADType(this string dateTimeOfTaiwanType)
         {
-            string[] date = dateTimeOfROCType.Split('/');
+            string[] date = dateTimeOfTaiwanType.Split('/');
             date[0] = (Convert.ToInt32(date.FirstOrDefault()) + 1911).ToString();
 
             return string.Join('/', date);
+        }
+
+        /// <summary>
+        /// 轉成民國時間
+        /// </summary>
+        /// <param name="dateTime">dateTime</param>
+        /// <returns>民國時間</returns>
+        public static string ConvertToTaiwanType(this DateTime dateTime)
+        {
+            string date = $"{dateTime.Year - 1911}/{dateTime.Month}";
+
+            return date;
         }
     }
 }

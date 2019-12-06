@@ -1,12 +1,12 @@
 ﻿using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace BX_Stock.Models.Dto.TwseDto
+namespace BX_Stock.Models.Dto
 {
     /// <summary>
     /// 個股回傳查詢資訊Dto
     /// </summary>
-    public class StockDayResponseDto
+    public class TwseStockDayResponseDto
     {
         /// <summary>
         /// 回傳狀態
