@@ -29,9 +29,6 @@ namespace BX_Stock.Controllers
 
         public IActionResult Index()
         {
-            //this.TpexAPIService.ProcessStockHistoryData(4995);
-            //this.TwseAPIService.ProcessStockScheduleFirst(1204, 1210);
-
             return this.View();
         }
     }
