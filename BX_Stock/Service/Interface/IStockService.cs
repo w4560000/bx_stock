@@ -14,5 +14,7 @@ namespace BX_Stock.Service
         /// </summary>
         /// <returns>股票代號清單</returns>
         void ProcessStockSchedule1();
+
+        void Test();
     }
 }

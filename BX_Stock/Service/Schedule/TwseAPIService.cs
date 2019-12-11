@@ -89,7 +89,7 @@ namespace BX_Stock.Service
             result.ForEach(f => f.StockNo = stockNo);
 
             // 計算KD
-            //result.CalcKD();
+            result.CalcKD();
 
             this.StockContext.AddRange(result);
             this.StockContext.SaveChanges();

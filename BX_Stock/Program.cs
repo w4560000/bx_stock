@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NLog.Web;
@@ -14,7 +9,7 @@ namespace BX_Stock
     {
         public static void Main(string[] args)
         {
-            NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
+            //NLogBuilder.ConfigureNLog("nlog.config").GetCurrentClassLogger();
             CreateHostBuilder(args).Build().Run();
         }
 

@@ -36,7 +36,10 @@ namespace BX_Stock.Helper
             // 計算K
             static decimal Calc_K(decimal closeNow, decimal lowestPrice, decimal highestPrice, decimal yesterdayK)
             {
-                return (yesterdayK * 2 / 3) + (closeNow - lowestPrice) / (highestPrice - lowestPrice) * 100 / 3;
+                // 防止相減為0時相除報錯
+                decimal RSV = (closeNow - lowestPrice == 0 || highestPrice - lowestPrice == 0) ? 0 : (closeNow - lowestPrice) / (highestPrice - lowestPrice);
+
+                return (yesterdayK * 2 / 3) + RSV * 100 / 3;
             }
 
             // 計算D

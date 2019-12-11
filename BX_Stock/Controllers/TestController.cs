@@ -29,6 +29,7 @@ namespace BX_Stock.Controllers
 
         public IActionResult Index()
         {
+            
             return this.View();
         }
     }
