@@ -31,8 +31,10 @@ namespace BX_Stock
 
             TaskProvider taskProvider = (TaskProvider)serviceProvider.GetService(typeof(ITaskProvider));
 
-            taskProvider.RecurringTask<ITwseAPIService>("新增上市個股代碼", x => x.ProcessStockScheduleFirst(9935, 10000), Cron.Monthly());
-            taskProvider.RecurringTask<ITpexAPIService>("新增上櫃個股代碼", x => x.ProcessStockScheduleFirst(8050, 10000), Cron.Monthly());
+            taskProvider.RecurringTask<IStockService>("更新上市上櫃個股代碼", x => x.ProcessStockSchedule1(), Cron.Daily());
+
+            //taskProvider.RecurringTask<ITwseAPIService>("新增上市個股代碼", x => x.ProcessStockScheduleFirst(0, 100), Cron.Monthly());
+            //taskProvider.RecurringTask<ITpexAPIService>("新增上櫃個股代碼", x => x.ProcessStockScheduleFirst(0, 100), Cron.Monthly());
 
             //taskProvider.RecurringTask<ITwseAPIService>("測試", x => x.Test1515(), Cron.Monthly());
         }

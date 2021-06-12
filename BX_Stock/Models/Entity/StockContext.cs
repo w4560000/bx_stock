@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -31,30 +32,36 @@ namespace BX_Stock.Models.Entity
                 entity.HasKey(e => e.StockNo);
 
                 entity.Property(e => e.StockNo)
-                    .HasMaxLength(4)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                      .IsRequired()
+                      .HasMaxLength(4)
+                      .IsUnicode(false)
+                      .IsFixedLength()
+                      .ValueGeneratedNever();
 
-                entity.Property(e => e.IsListed).HasColumnName("isListed");
+                entity.Property(e => e.IsListed)
+                      .IsRequired();
 
                 entity.Property(e => e.StockName)
-                    .IsRequired()
-                    .HasMaxLength(10)
-                    .IsFixedLength();
+                      .IsRequired()
+                      .HasMaxLength(10)
+                      .IsFixedLength()
+                      .IsUnicode(true);
             });
 
             modelBuilder.Entity<StockDay>(entity =>
             {
                 entity.HasKey(e => new { e.StockNo, e.Date })
-                    .HasName("PK_DayStock");
+                      .HasName("PK_DayStock");
 
                 entity.Property(e => e.StockNo)
-                    .HasColumnName("StockNO")
-                    .HasMaxLength(4)
-                    .IsUnicode(false)
-                    .IsFixedLength();
+                      .IsRequired()
+                      .HasMaxLength(4)
+                      .IsUnicode(true)
+                      .IsFixedLength();
 
-                entity.Property(e => e.Date).HasColumnType("datetime");
+                entity.Property(e => e.Date)
+                      .IsRequired()
+                      .HasColumnType("datetime");
 
                 entity.Property(e => e.Change).HasColumnType("decimal(9, 2)");
 
@@ -63,19 +70,15 @@ namespace BX_Stock.Models.Entity
                 entity.Property(e => e.D).HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Dea)
-                    .HasColumnName("DEA")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Dif)
-                    .HasColumnName("DIF")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Ema12)
-                    .HasColumnName("EMA12")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Ema26)
-                    .HasColumnName("EMA26")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.HighestPrice).HasColumnType("decimal(9, 2)");
@@ -87,7 +90,6 @@ namespace BX_Stock.Models.Entity
                 entity.Property(e => e.OpeningPrice).HasColumnType("decimal(9, 2)");
 
                 entity.Property(e => e.Osc)
-                    .HasColumnName("OSC")
                     .HasColumnType("decimal(9, 3)");
             });
 
@@ -96,7 +98,6 @@ namespace BX_Stock.Models.Entity
                 entity.HasKey(e => new { e.StockNo, e.Date });
 
                 entity.Property(e => e.StockNo)
-                    .HasColumnName("StockNO")
                     .HasMaxLength(4)
                     .IsUnicode(false)
                     .IsFixedLength();
@@ -110,19 +111,15 @@ namespace BX_Stock.Models.Entity
                 entity.Property(e => e.D).HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Dea)
-                    .HasColumnName("DEA")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Dif)
-                    .HasColumnName("DIF")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Ema12)
-                    .HasColumnName("EMA12")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Ema26)
-                    .HasColumnName("EMA26")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.HighestPrice).HasColumnType("decimal(9, 2)");
@@ -134,7 +131,6 @@ namespace BX_Stock.Models.Entity
                 entity.Property(e => e.OpeningPrice).HasColumnType("decimal(9, 2)");
 
                 entity.Property(e => e.Osc)
-                    .HasColumnName("OSC")
                     .HasColumnType("decimal(9, 3)");
             });
 
@@ -143,7 +139,6 @@ namespace BX_Stock.Models.Entity
                 entity.HasKey(e => new { e.StockNo, e.Date });
 
                 entity.Property(e => e.StockNo)
-                    .HasColumnName("StockNO")
                     .HasMaxLength(4)
                     .IsUnicode(false)
                     .IsFixedLength();
@@ -157,19 +152,15 @@ namespace BX_Stock.Models.Entity
                 entity.Property(e => e.D).HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Dea)
-                    .HasColumnName("DEA")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Dif)
-                    .HasColumnName("DIF")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Ema12)
-                    .HasColumnName("EMA12")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.Ema26)
-                    .HasColumnName("EMA26")
                     .HasColumnType("decimal(9, 3)");
 
                 entity.Property(e => e.HighestPrice).HasColumnType("decimal(9, 2)");
@@ -181,7 +172,6 @@ namespace BX_Stock.Models.Entity
                 entity.Property(e => e.OpeningPrice).HasColumnType("decimal(9, 2)");
 
                 entity.Property(e => e.Osc)
-                    .HasColumnName("OSC")
                     .HasColumnType("decimal(9, 3)");
             });
 
