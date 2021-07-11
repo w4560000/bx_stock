@@ -1,20 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using BX_Stock.Models;
+using BX_Stock.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using BX_Stock.Models;
-using Hangfire;
-using BX_Stock.Service;
+using System.Diagnostics;
 
 namespace BX_Stock.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> Logger;
-        
+
         private readonly ITwseAPIService TSECAPIService;
 
         public HomeController(

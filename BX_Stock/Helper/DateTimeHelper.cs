@@ -67,5 +67,21 @@ namespace BX_Stock.Helper
 
             return date;
         }
+
+        /// <summary>
+        /// 取得該週 週一And週五 日期
+        /// </summary>
+        /// <param name="now">現在時間</param>
+        /// <returns>(該週 週一日期, 該週 週五日期)</returns>
+        public static (DateTime, DateTime) GetCurrentMondayAndFridayOfWeek(this DateTime now)
+        {
+            static int GetDayOfWeek(DateTime now) => now.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)now.DayOfWeek;
+
+            DateTime currentMondayOfWeek = now.AddDays(1 - GetDayOfWeek(now));
+            DateTime currentFridayOfWeek = now.AddDays(5 - GetDayOfWeek(now));
+
+            return (new DateTime(currentMondayOfWeek.Year, currentMondayOfWeek.Month, currentMondayOfWeek.Day),
+                    new DateTime(currentFridayOfWeek.Year, currentFridayOfWeek.Month, currentFridayOfWeek.Day));
+        }
     }
 }

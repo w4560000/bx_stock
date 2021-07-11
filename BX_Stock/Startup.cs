@@ -1,3 +1,4 @@
+using BX_Stock.Models;
 using BX_Stock.Models.Entity;
 using BX_Stock.Service;
 using Hangfire;
@@ -30,6 +31,7 @@ namespace BX_Stock
             services.AddDbContext<StockContext>(options =>
             {
                 options.UseSqlServer(this.Configuration.GetConnectionString("DefaultConnection"));
+                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             });
 
             // µù¥UAutoMapper

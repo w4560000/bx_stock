@@ -2,6 +2,7 @@
 using BX_Stock.Helper;
 using BX_Stock.Models.Dto;
 using BX_Stock.Models.Entity;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +31,11 @@ namespace BX_Stock.Service
         private readonly IMapper Mapper;
 
         /// <summary>
+        /// Logger
+        /// </summary>
+        private readonly ILogger<TpexAPIService> Logger;
+
+        /// <summary>
         /// 建構子
         /// </summary>
         /// <param name="baseApiService">基礎APIService</param>
@@ -38,12 +44,13 @@ namespace BX_Stock.Service
         public TpexAPIService(
             IBaseApiService baseApiService,
             StockContext stockContext,
-            IMapper mapper
-            )
+            IMapper mapper,
+            ILogger<TpexAPIService> logger)
         {
             this.BaseApiService = baseApiService;
             this.Mapper = mapper;
             this.StockContext = stockContext;
+            this.Logger = logger;
         }
 
         /// <summary>
@@ -69,16 +76,18 @@ namespace BX_Stock.Service
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
         /// <param name="endMonth">查詢結束時間</param>
-        public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01", string endMonth = "2019-10")
+        public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2021-06")
         {
+            this.Logger.LogInformation($"新增上櫃個股 : {stockNo} start!");
             DateTime twseDataStartMonth = DateTime.Parse(startMonth);
-            DateTime currentMonth = string.IsNullOrEmpty(endMonth) ? DateTime.Now : DateTime.Parse(endMonth);
             List<IStockEntity> result = new List<IStockEntity>();
 
-            foreach (DateTime date in twseDataStartMonth.EachMonthTo(currentMonth))
+            foreach (DateTime date in twseDataStartMonth.EachMonthTo(DateTime.Parse(endMonth)))
             {
-                (StockDayDto stockDayDto, int recordCount) = RetryHelper.RetryIfThrown<Exception, (StockDayDto, int)>(() =>
-                                                                    this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult(), 3, 3);
+                //(StockDayDto stockDayDto, int recordCount) = RetryHelper.RetryIfThrown<Exception, (StockDayDto, int)>(() =>
+                //                                                    this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult(), 3, 3);
+
+                (StockDayDto stockDayDto, int recordCount) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
 
                 if (recordCount < 1)
                 {
@@ -91,10 +100,11 @@ namespace BX_Stock.Service
             result.ForEach(f => f.StockNo = stockNo);
 
             // 計算KD
-            //result.CalcKD();
+            result.CalcAllKD();
 
             this.StockContext.AddRange(result);
             this.StockContext.SaveChanges();
+            this.Logger.LogInformation($"新增上櫃個股 : {stockNo} end!");
         }
 
         /// <summary>
@@ -103,46 +113,63 @@ namespace BX_Stock.Service
         /// <returns>個股單月資訊</returns>
         private async Task<(StockDayDto, int)> GetStockDataAsync(int stockNo, DateTime date)
         {
-            TpexStockDayRequestParamDto test = new TpexStockDayRequestParamDto()
+            try
             {
-                D = date.ConvertToTaiwanType(),  // "108/09",
-                Stkno = stockNo.ToString()
-            };
-
-            // 連續串證交所API 會被鎖IP，每隔三秒串一次
-            //System.Threading.Thread.Sleep(3000);
-
-            TpexStockDayResponseDto stockData = await this.BaseApiService
-                .GetAsync<TpexStockDayResponseDto, TpexStockDayRequestParamDto>(StockApiUrl.TpexStockDay, test);
-
-            StockDayDetailDto[] detailDto = new StockDayDetailDto[stockData.ITotalRecords];
-
-            // mapping
-            for (int i = 0; i < stockData.ITotalRecords; i++)
-            {
-                detailDto[i] = new StockDayDetailDto
+                TpexStockDayRequestParamDto test = new TpexStockDayRequestParamDto()
                 {
-                    Date = DateTime.Parse(stockData.AaData[i][0].ConvertToADType().Substring(0, 10)),
-                    TradeVolume = Convert.ToInt32(stockData.AaData[i][1].Replace(",", string.Empty)),
-                    TradeValue = Convert.ToDouble(stockData.AaData[i][2].CheckDoubleValue()),
-                    OpeningPrice = Convert.ToDouble(stockData.AaData[i][3].CheckDoubleValue()),
-                    HighestPrice = Convert.ToDouble(stockData.AaData[i][4].CheckDoubleValue()),
-                    LowestPrice = Convert.ToDouble(stockData.AaData[i][5].CheckDoubleValue()),
-                    ClosingPrice = Convert.ToDouble(stockData.AaData[i][6].CheckDoubleValue()),
-                    Change = Convert.ToDouble(stockData.AaData[i][7].CheckDoubleValue()),
-                    Transaction = Convert.ToInt32(stockData.AaData[i][8].Replace(",", string.Empty))
+                    D = date.ConvertToTaiwanType(),  // "108/09",
+                    Stkno = stockNo.ToString()
                 };
+
+                while (true)
+                {
+                    // 連續串證交所API 會被鎖IP，每隔三秒串一次
+                    System.Threading.Thread.Sleep(3000);
+
+                    TpexStockDayResponseDto stockData = await this.BaseApiService
+                        .GetAsync<TpexStockDayResponseDto, TpexStockDayRequestParamDto>(StockApiUrl.TpexStockDay, test);
+
+                    if (stockData == null)
+                    {
+                        Logger.LogError($"新增上櫃個股失敗: 股號:{stockNo}, 查詢date:{date}, stockData = null");
+                        continue;
+                    }
+
+                    StockDayDetailDto[] detailDto = new StockDayDetailDto[stockData.ITotalRecords];
+
+                    // mapping
+                    for (int i = 0; i < stockData.ITotalRecords; i++)
+                    {
+                        detailDto[i] = new StockDayDetailDto
+                        {
+                            Date = DateTime.Parse(stockData.AaData[i][0].ConvertToADType().Substring(0, 10)),
+                            TradeVolume = Convert.ToInt32(stockData.AaData[i][1].Replace(",", string.Empty)),
+                            TradeValue = Convert.ToDouble(stockData.AaData[i][2].CheckDoubleValue()),
+                            OpeningPrice = Convert.ToDouble(stockData.AaData[i][3].CheckDoubleValue()),
+                            HighestPrice = Convert.ToDouble(stockData.AaData[i][4].CheckDoubleValue()),
+                            LowestPrice = Convert.ToDouble(stockData.AaData[i][5].CheckDoubleValue()),
+                            ClosingPrice = Convert.ToDouble(stockData.AaData[i][6].CheckDoubleValue()),
+                            Change = Convert.ToDouble(stockData.AaData[i][7].CheckDoubleValue()),
+                            Transaction = Convert.ToInt32(stockData.AaData[i][8].Replace(",", string.Empty))
+                        };
+                    }
+
+                    StockDayDto result = new StockDayDto()
+                    {
+                        IsOK = stockData.StkNo.Equals(stockNo),
+                        Date = stockData.ReportDate.ConvertToADType(),
+                        StockNo = stockData.StkNo,
+                        Data = detailDto
+                    };
+
+                    return (result, stockData.ITotalRecords);
+                }
             }
-
-            StockDayDto result = new StockDayDto()
+            catch (Exception ex)
             {
-                IsOK = stockData.StkNo.Equals(stockNo),
-                Date = stockData.ReportDate.ConvertToADType(),
-                StockNo = stockData.StkNo,
-                Data = detailDto
-            };
-
-            return (result, stockData.ITotalRecords);
+                this.Logger.LogError($"新增上櫃個股 發生錯誤: 股號:{stockNo}, date:{date}, error: {ex}.");
+                throw ex;
+            }
         }
     }
 }

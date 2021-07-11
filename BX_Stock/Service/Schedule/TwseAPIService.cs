@@ -2,6 +2,7 @@
 using BX_Stock.Helper;
 using BX_Stock.Models.Dto;
 using BX_Stock.Models.Entity;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +31,11 @@ namespace BX_Stock.Service
         private readonly IMapper Mapper;
 
         /// <summary>
+        /// Logger
+        /// </summary>
+        private readonly ILogger<TwseAPIService> Logger;
+
+        /// <summary>
         /// 建構子
         /// </summary>
         /// <param name="baseApiService">基礎APIService</param>
@@ -38,11 +44,13 @@ namespace BX_Stock.Service
         public TwseAPIService(
             IBaseApiService baseApiService,
             StockContext stockContext,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<TwseAPIService> logger)
         {
             this.BaseApiService = baseApiService;
             this.StockContext = stockContext;
             this.Mapper = mapper;
+            this.Logger = logger;
         }
 
         /// <summary>
@@ -51,10 +59,10 @@ namespace BX_Stock.Service
         /// <returns>股票代號清單</returns>
         public void ProcessStockScheduleFirst(int start, int end)
         {
-            List<int> currentDbStockNo = this.StockContext.Set<Stock>().Where(w => w.IsListed).Select(s => s.StockNo).ToList();
+            List<int> currentDbStockNo = this.StockContext.Set<Stock>().Where(w => w.IsListed && w.IsEnabled).Select(s => s.StockNo).ToList();
             currentDbStockNo = currentDbStockNo.Where(w => start <= w && w < end).ToList();
 
-            // 撈11月份歷史資料
+            // 撈歷史資料
             currentDbStockNo.ForEach(x => this.ProcessStockHistoryData(x));
 
             // 計算週KD 月KD
@@ -68,17 +76,17 @@ namespace BX_Stock.Service
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
         /// <param name="endMonth">查詢結束時間</param>
-        public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2019-10")
+        public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2021-06")
         {
+            this.Logger.LogInformation($"新增上市個股 : {stockNo} start!");
             DateTime twseDataStartMonth = DateTime.Parse(startMonth);
-            DateTime currentMonth = string.IsNullOrEmpty(endMonth) ? DateTime.Now : DateTime.Parse(endMonth);
             List<IStockEntity> result = new List<IStockEntity>();
 
-            foreach (DateTime date in twseDataStartMonth.EachMonthTo(currentMonth))
+            foreach (DateTime date in twseDataStartMonth.EachMonthTo(DateTime.Parse(endMonth)))
             {
-                (StockDayDto stockDayDto, string stat) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
+                (StockDayDto stockDayDto, bool hasGetData) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
 
-                if (stat.Contains("沒有符合條件"))
+                if (!hasGetData)
                 {
                     continue;
                 }
@@ -89,33 +97,72 @@ namespace BX_Stock.Service
             result.ForEach(f => f.StockNo = stockNo);
 
             // 計算KD
-            result.CalcKD();
+            result.CalcAllKD();
 
             this.StockContext.AddRange(result);
             this.StockContext.SaveChanges();
+
+            this.Logger.LogInformation($"新增上市個股 : {stockNo} end!");
         }
 
         /// <summary>
         /// 取得個股單月資訊
         /// </summary>
         /// <returns>個股單月資訊</returns>
-        private async Task<(StockDayDto, string)> GetStockDataAsync(int stockNo, DateTime date)
+        private async Task<(StockDayDto, bool)> GetStockDataAsync(int stockNo, DateTime date)
         {
-            TwseStockDayRequestParamDto requestParam = new TwseStockDayRequestParamDto()
+            StockDayDto result = null;
+            TwseStockDayResponseDto stockData = new TwseStockDayResponseDto();
+            try
             {
-                Date = date.ToString("yyyyMMdd"),  //"20190901",
-                StockNo = stockNo.ToString()
-            };
+                TwseStockDayRequestParamDto requestParam = new TwseStockDayRequestParamDto()
+                {
+                    Date = date.ToString("yyyyMMdd"),  //"20190901",
+                    StockNo = stockNo.ToString()
+                };
 
-            // 連續串證交所API 會被鎖IP，每隔三秒串一次
-            System.Threading.Thread.Sleep(3000);
+                while (true)
+                {
+                    // 連續串證交所API 會被鎖IP，每隔三秒串一次
+                    System.Threading.Thread.Sleep(3000);
 
-            TwseStockDayResponseDto stockData = await this.BaseApiService
-                .GetAsync<TwseStockDayResponseDto, TwseStockDayRequestParamDto>(StockApiUrl.TwseStockDay, requestParam);
+                    stockData = await this.BaseApiService
+                        .GetAsync<TwseStockDayResponseDto, TwseStockDayRequestParamDto>(StockApiUrl.TwseStockDay, requestParam);
 
-            StockDayDto result = this.Mapper.Map<StockDayDto>(stockData);
+                    if (stockData == null)
+                    {
+                        Logger.LogError($"新增上市個股失敗: 股號:{stockNo}, 查詢date:{date}, stockData = null");
+                        continue;
+                    }
 
-            return (result, stockData.Stat);
+                    switch (stockData.Stat)
+                    {
+                        case "OK":
+                            result = this.Mapper.Map<StockDayDto>(stockData);
+                            if (result.Data.FirstOrDefault().Date.ToString("yyyyMM") == date.ToString("yyyyMM"))
+                                return (result, true);
+                            break;
+
+                        case "很抱歉，沒有符合條件的資料!":
+                            Logger.LogError($"新增上市個股失敗: 股號:{stockNo}, 查詢date:{date}, {stockData.Stat}");
+                            return (null, false);
+
+                        case "查詢日期小於99年1月4日，請重新查詢!":
+                        case "查詢日期大於今日，請重新查詢!":
+
+                            Logger.LogError($"新增上市個股失敗: 股號:{stockNo}, 查詢date:{date}, {stockData.Stat} 已重試");
+                            break;
+
+                        default:
+                            throw new Exception(stockData.Stat);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                this.Logger.LogError($"新增上市個股 發生錯誤: 股號:{stockNo}, date:{date}, error: {ex}.");
+                throw ex;
+            }
         }
     }
 }

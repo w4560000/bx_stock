@@ -1,8 +1,6 @@
-﻿using BX_Stock.Helper;
-using BX_Stock.Models.Entity;
+﻿using BX_Stock.Models.Entity;
 using BX_Stock.Service;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
 
 namespace BX_Stock.Controllers
 {
@@ -15,10 +13,11 @@ namespace BX_Stock.Controllers
         private readonly IStockService StockService;
 
         private readonly StockContext StockContext;
+
         public TestController(
-            ITwseAPIService twseAPIService, 
-            IStockService stockService, 
-            StockContext stockContext, 
+            ITwseAPIService twseAPIService,
+            IStockService stockService,
+            StockContext stockContext,
             ITpexAPIService tpexAPIService)
         {
             this.TwseAPIService = twseAPIService;
@@ -29,7 +28,30 @@ namespace BX_Stock.Controllers
 
         public IActionResult Index()
         {
-            
+            // 每日排程 更新個股
+            StockService.ProcessStockSchedule1();
+
+            // 週六排程 新增新個股 所有週KD
+            StockService.CalcNewStockAllWeekKD();
+
+            // 重新撈取上市個股資料
+            //this.TwseAPIService.ProcessStockScheduleFirst(1000, 10000);
+
+            // 重新撈取上櫃個股資料
+            //this.TpexAPIService.ProcessStockScheduleFirst(1000, 10000);
+
+            //this.TwseAPIService.ProcessStockHistoryData(1101, "2010-01-04", "2021-06");
+
+            // 重新計算所有日KD
+            //StockService.CalcCurrentAllDayKD();
+
+            // 重新計算所有週KD
+            //StockService.CalcCurrentAllWeekKD();
+
+            // 計算該週 KD
+            //StockService.CalcCurrentWeekKD();
+
+            //bool a = this.StockContext.Set<Stock>().Where(w => w.StockNo == 1101).Select(s => s.IsEnabled).FirstOrDefault();
             return this.View();
         }
     }

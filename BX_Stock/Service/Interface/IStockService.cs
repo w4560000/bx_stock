@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace BX_Stock.Service
+﻿namespace BX_Stock.Service
 {
     /// <summary>
     /// 股票Service
@@ -15,6 +13,29 @@ namespace BX_Stock.Service
         /// <returns>股票代號清單</returns>
         void ProcessStockSchedule1();
 
-        void Test();
+        /// <summary>
+        /// 週六 Job
+        /// 計算新個股 所有週KD
+        /// 因是新股, 故重新計算週KD
+        /// </summary>
+        void CalcNewStockAllWeekKD();
+
+        /// <summary>
+        /// 計算個股 所有日KD
+        /// Init資料時使用
+        /// </summary>
+        void CalcCurrentAllDayKD();
+
+        /// <summary>
+        /// 計算個股 所有週KD
+        /// Init資料時使用
+        /// </summary>
+        void CalcCurrentAllWeekKD();
+
+        /// <summary>
+        /// 計算個股 該週KD
+        /// 只能在週六 or 週日 執行
+        /// </summary>
+        void CalcCurrentWeekKD();
     }
 }

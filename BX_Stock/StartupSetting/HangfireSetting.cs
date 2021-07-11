@@ -1,6 +1,5 @@
 ﻿using BX_Stock.Service;
 using Hangfire;
-using Hangfire.SQLite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -16,7 +15,7 @@ namespace BX_Stock
         /// 載入
         /// </summary>
         /// <param name="services">服務集合</param>
-        public static void SettingHangfire(this IServiceCollection services , IConfiguration configuration)
+        public static void SettingHangfire(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddHangfire(config => config.UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection")));
         }
@@ -31,10 +30,10 @@ namespace BX_Stock
 
             TaskProvider taskProvider = (TaskProvider)serviceProvider.GetService(typeof(ITaskProvider));
 
-            taskProvider.RecurringTask<IStockService>("更新上市上櫃個股代碼", x => x.ProcessStockSchedule1(), Cron.Daily());
+            //taskProvider.RecurringTask<IStockService>("更新上市上櫃個股代碼", x => x.ProcessStockSchedule1(), Cron.Daily());
 
-            //taskProvider.RecurringTask<ITwseAPIService>("新增上市個股代碼", x => x.ProcessStockScheduleFirst(0, 100), Cron.Monthly());
-            //taskProvider.RecurringTask<ITpexAPIService>("新增上櫃個股代碼", x => x.ProcessStockScheduleFirst(0, 100), Cron.Monthly());
+            //taskProvider.RecurringTask<ITwseAPIService>("新增上市個股代碼", x => x.ProcessStockScheduleFirst(1100, 10000), Cron.Monthly());
+            //taskProvider.RecurringTask<ITpexAPIService>("新增上櫃個股代碼", x => x.ProcessStockScheduleFirst(1100, 10000), Cron.Monthly());
 
             //taskProvider.RecurringTask<ITwseAPIService>("測試", x => x.Test1515(), Cron.Monthly());
         }
