@@ -6,6 +6,5 @@
         public string StockName { get; set; }
         public bool IsListed { get; set; }
         public bool IsEnabled { get; set; }
-        public bool IsNew { get; set; }
     }
 }

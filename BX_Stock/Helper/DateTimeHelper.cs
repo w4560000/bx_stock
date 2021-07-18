@@ -83,5 +83,11 @@ namespace BX_Stock.Helper
             return (new DateTime(currentMondayOfWeek.Year, currentMondayOfWeek.Month, currentMondayOfWeek.Day),
                     new DateTime(currentFridayOfWeek.Year, currentFridayOfWeek.Month, currentFridayOfWeek.Day));
         }
+
+        /// <summary>
+        /// 是否為假日
+        /// </summary>
+        /// <returns>是否為假日</returns>
+        public static bool IsHoliday() => DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday;
     }
 }

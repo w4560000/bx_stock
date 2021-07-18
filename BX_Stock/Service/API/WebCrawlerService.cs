@@ -74,8 +74,7 @@ namespace BX_Stock.Service
                                 StockNo = Convert.ToInt32(data[0].Split(" ")[0]), 
                                 StockName = data[1], 
                                 IsListed = true, 
-                                IsEnabled = true,
-                                IsNew = true
+                                IsEnabled = true
                             });
                     }
 
@@ -127,8 +126,7 @@ namespace BX_Stock.Service
                             StockNo =  Convert.ToInt32(data[0].Split(" ")[0]),
                             StockName = data[1], 
                             IsListed = false, 
-                            IsEnabled = true,
-                            IsNew = true
+                            IsEnabled = true
                         });
                     }
 

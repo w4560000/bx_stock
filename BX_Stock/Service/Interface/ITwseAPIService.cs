@@ -13,7 +13,12 @@
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
-        /// <param name="endMonth">查詢結束時間</param>
-        void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2019-10");
+        void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04");
+
+        /// <summary>
+        /// 新增上市個股當日資料
+        /// </summary>
+        /// <param name="stockNo">要新增的個股</param>
+        void ProcessStockToDayData(int stockNo);
     }
 }

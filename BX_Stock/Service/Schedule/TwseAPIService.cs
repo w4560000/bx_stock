@@ -2,6 +2,7 @@
 using BX_Stock.Helper;
 using BX_Stock.Models.Dto;
 using BX_Stock.Models.Entity;
+using EFCore.BulkExtensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -75,14 +76,13 @@ namespace BX_Stock.Service
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
-        /// <param name="endMonth">查詢結束時間</param>
-        public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2021-06")
+        public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04")
         {
-            this.Logger.LogInformation($"新增上市個股 : {stockNo} start!");
+            this.Logger.LogInformation($"ProcessStockHistoryData 新增上市個股 : {stockNo} start!");
             DateTime twseDataStartMonth = DateTime.Parse(startMonth);
             List<IStockEntity> result = new List<IStockEntity>();
 
-            foreach (DateTime date in twseDataStartMonth.EachMonthTo(DateTime.Parse(endMonth)))
+            foreach (DateTime date in twseDataStartMonth.EachMonthTo(DateTime.Now))
             {
                 (StockDayDto stockDayDto, bool hasGetData) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
 
@@ -99,10 +99,57 @@ namespace BX_Stock.Service
             // 計算KD
             result.CalcAllKD();
 
-            this.StockContext.AddRange(result);
-            this.StockContext.SaveChanges();
+            result.Remove(result.Where(w => w.Date.ToString("yyyyMMdd") == "20210716").FirstOrDefault());
 
-            this.Logger.LogInformation($"新增上市個股 : {stockNo} end!");
+            this.StockContext.BulkInsertOrUpdate(result);
+            this.Logger.LogInformation($"ProcessStockHistoryData 新增上市個股 : {stockNo} end!");
+        }
+
+        /// <summary>
+        /// 新增上市個股當日資料
+        /// </summary>
+        /// <param name="stockNo">要新增的個股</param>
+        public void ProcessStockToDayData(int stockNo)
+        {
+            this.Logger.LogInformation($"ProcessStockToDayData 上市個股當日資料 : {stockNo} start!");
+            List<IStockEntity> result = new List<IStockEntity>();
+
+            var date = DateTime.Parse("2021-07-16");
+
+            (StockDayDto stockDayDto, bool hasGetData) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
+
+            if (!hasGetData)
+            {
+                this.Logger.LogInformation($"ProcessStockToDayData 上市個股當日資料失敗 個股:{stockNo} hasGetData = false, 查無資料");
+            }
+
+            var todayStockDay = this.Mapper.Map<List<StockDay>>(stockDayDto.Data).Where(w => w.Date.ToString("yyyyMMdd") == date.ToString("yyyyMMdd")).FirstOrDefault();
+            todayStockDay.StockNo = stockNo;
+
+            if (todayStockDay != null)
+            {
+                // 取得該個股前八日 StockDay資料
+                List<StockDay> stockDataList = this.StockContext
+                                                   .Set<StockDay>()
+                                                   .Where(w => w.StockNo.Equals(stockNo))
+                                                   .OrderByDescending(o => o.Date)
+                                                   .Take(8)
+                                                   .ToList();
+
+                stockDataList.Add(todayStockDay);
+
+                List<IStockEntity> stockDayList = new List<IStockEntity>();
+                stockDayList.AddRange(stockDataList);
+                stockDayList = stockDayList.OrderBy(o => o.Date).ToList();
+                stockDayList.CalcCurrentKD(9);
+
+                this.StockContext.BulkInsertOrUpdate(new List<IStockEntity>() { stockDayList.Last() });
+                this.Logger.LogInformation($"ProcessStockToDayData 上市個股當日資料 End!");
+            }
+            else
+            {
+                this.Logger.LogInformation($"ProcessStockToDayData 上市個股當日資料失敗 個股:{stockNo} 查無今日資料");
+            }
         }
 
         /// <summary>
@@ -128,6 +175,8 @@ namespace BX_Stock.Service
 
                     stockData = await this.BaseApiService
                         .GetAsync<TwseStockDayResponseDto, TwseStockDayRequestParamDto>(StockApiUrl.TwseStockDay, requestParam);
+
+                    Logger.LogInformation($"GetStockDataAsync: 股號:{stockNo}, 查詢date:{date}.");
 
                     if (stockData == null)
                     {

@@ -11,7 +11,12 @@
         /// 則移除下架的個股與相關資訊，並新增上架的個股與相關資訊
         /// </summary>
         /// <returns>股票代號清單</returns>
-        void ProcessStockSchedule1();
+        void ProcessNewStock_Schedule1();
+
+        /// <summary>
+        /// 每日排程 新增當日個股 (Schedule2)
+        /// </summary>
+        void ProcessTodayStock_Schedule2();
 
         /// <summary>
         /// 週六 Job

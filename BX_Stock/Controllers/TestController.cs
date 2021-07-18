@@ -29,10 +29,13 @@ namespace BX_Stock.Controllers
         public IActionResult Index()
         {
             // 每日排程 更新個股
-            StockService.ProcessStockSchedule1();
+            StockService.ProcessNewStock_Schedule1();
+
+            // 每日排程 新增當日個股資料
+            StockService.ProcessTodayStock_Schedule2();
 
             // 週六排程 新增新個股 所有週KD
-            StockService.CalcNewStockAllWeekKD();
+            //StockService.CalcNewStockAllWeekKD();
 
             // 重新撈取上市個股資料
             //this.TwseAPIService.ProcessStockScheduleFirst(1000, 10000);

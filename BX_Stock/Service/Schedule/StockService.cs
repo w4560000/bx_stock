@@ -1,6 +1,7 @@
 ﻿using BX_Stock.Helper;
 using BX_Stock.Models.Entity;
 using EFCore.BulkExtensions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -61,37 +62,79 @@ namespace BX_Stock.Service
         }
 
         /// <summary>
-        /// 每日排程 撈取現有股號 (Schedule1)
+        /// 每日排程 更新個股(新增新上市櫃個股&移除下市櫃個股) (Schedule1)
         /// 若撈取的資料與現有資料庫股號有差異
         /// 則移除下架的個股與相關資訊，並新增上架的個股與相關資訊
         /// </summary>
-        /// <returns>股票代號清單</returns>
-        public void ProcessStockSchedule1()
+        ///
+        public void ProcessNewStock_Schedule1()
         {
-            Logger.LogInformation("每日排程 更新股票 ProcessStockSchedule1 Start!");
+            if (DateTimeHelper.IsHoliday())
+            {
+                this.Logger.LogInformation("ProcessNewStock_Schedule1 每日排程 更新個股 必須在平日執行");
+                return;
+            }
 
-            List<Stock> allStockData = new List<Stock>();
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            try
+            {
+                Logger.LogInformation("ProcessNewStock_Schedule1 每日排程 更新個股 Start!");
 
-            // 爬取上市股票
-            allStockData.AddRange(this.WebCrawlerService.GetAllListedStockNoAsync().GetAwaiter().GetResult());
+                List<Stock> allStockData = new List<Stock>();
 
-            // 爬取上櫃股票
-            allStockData.AddRange(this.WebCrawlerService.GetAllCabinetStockNoAsync().GetAwaiter().GetResult());
+                // 爬取上市股票
+                allStockData.AddRange(this.WebCrawlerService.GetAllListedStockNoAsync().GetAwaiter().GetResult());
 
-            List<Stock> currentDbStockData = this.StockContext.Set<Stock>().ToList();
+                // 爬取上櫃股票
+                allStockData.AddRange(this.WebCrawlerService.GetAllCabinetStockNoAsync().GetAwaiter().GetResult());
 
-            List<int> allStockNo = allStockData.Select(s => s.StockNo).ToList();
-            List<int> currentDbStockNo = currentDbStockData.Select(s => s.StockNo).ToList();
+                List<int> allStockNo = allStockData.Select(s => s.StockNo).ToList();
+                List<int> currentDbStockNo = this.StockContext.Set<Stock>().Select(s => s.StockNo).ToList();
 
-            // 目前DB沒有的個股，但市面上有的(新上市or新上櫃)，新增該股資料
-            List<int> insertStockNoList = allStockNo.Except(currentDbStockNo).ToList();
-            this.InsertStock(allStockData.Where(x => insertStockNoList.Contains(x.StockNo)).ToList());
+                // 目前DB沒有的個股，但市面上有的(新上市or新上櫃)，新增該股資料
+                List<int> insertStockNoList = allStockNo.Except(currentDbStockNo).ToList();
+                this.InsertStock(allStockData.Where(x => insertStockNoList.Contains(x.StockNo)).ToList());
 
-            //// 目前DB有的個股，但市面上沒有的(下市or下櫃)，刪除該股在DB的資料
-            List<int> deleteStockNoList = currentDbStockNo.Except(allStockNo).ToList();
-            this.DeleteStockData(deleteStockNoList);
+                //// 目前DB有的個股，但市面上沒有的(下市or下櫃)，刪除該股在DB的資料
+                List<int> deleteStockNoList = currentDbStockNo.Except(allStockNo).ToList();
+                this.DeleteStockData(deleteStockNoList);
 
-            Logger.LogInformation("每日排程 更新股票 ProcessStockSchedule1 End!");
+                Logger.LogInformation("ProcessNewStock_Schedule1 每日排程 更新個股  End!");
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"ProcessNewStock_Schedule1 每日排程 更新個股 發生錯誤, Error: {ex.Message}.");
+                transaction.Rollback();
+            }
+        }
+
+        /// <summary>
+        /// 每日排程 新增當日個股 (Schedule2)
+        /// </summary>
+        public void ProcessTodayStock_Schedule2()
+        {
+            if (DateTimeHelper.IsHoliday())
+            {
+                this.Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 必須在平日執行");
+                return;
+            }
+
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            try
+            {
+                Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 Start!");
+
+                this.TwseAPIService.ProcessStockToDayData(1101);
+
+                Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 End!");
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogInformation($"ProcessTodayStock_Schedule2 每日排程 新增當日個股 發生錯誤, Error: {ex.Message}.");
+                transaction.Rollback();
+            }
         }
 
         /// <summary>
@@ -101,15 +144,31 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcNewStockAllWeekKD()
         {
-            foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled && w.IsNew).Select(s => s.StockNo).ToList())
+            if (!DateTimeHelper.IsHoliday())
             {
-                Logger.LogInformation($"CalcNewStockAllWeekKD 計算個股 所有週KD 個股:{i} Start!");
-
-                this.ProcessStockAllWeekKD(i);
-
-                Logger.LogInformation($"CalcNewStockAllWeekKD 計算個股 所有週KD 個股:{i} End!");
+                this.Logger.LogInformation("CalcNewStockAllWeekKD 計算新個股 所有週KD 必須在周六或周日執行");
+                return;
             }
-            Logger.LogInformation("CalcNewStockAllWeekKD 計算個股 所有週KD End!");
+
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            try
+            {
+                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+                {
+                    Logger.LogInformation($"CalcNewStockAllWeekKD 計算新個股 所有週KD 個股:{i} Start!");
+
+                    this.ProcessStockAllWeekKD(i);
+
+                    Logger.LogInformation($"CalcNewStockAllWeekKD 計算新個股 所有週KD 個股:{i} End!");
+                }
+                Logger.LogInformation("CalcNewStockAllWeekKD 計算新個股 所有週KD End!");
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogInformation($"CalcNewStockAllWeekKD 計算新個股 所有週KD 發生錯誤, Error: {ex.Message}.");
+                transaction.Rollback();
+            }
         }
 
         /// <summary>
@@ -118,21 +177,31 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcCurrentAllDayKD()
         {
-            foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            try
             {
-                Logger.LogInformation($"CalcCurrentAllDayKD 計算個股 所有日KD 個股:{i} Start!");
+                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+                {
+                    Logger.LogInformation($"CalcCurrentAllDayKD 計算個股 所有日KD 個股:{i} Start!");
 
-                // 取出個股每日資訊
-                List<StockDay> stockData = this.StockContext.Set<StockDay>().Where(w => w.StockNo.Equals(i)).ToList();
+                    // 取出個股每日資訊
+                    List<StockDay> stockData = this.StockContext.Set<StockDay>().Where(w => w.StockNo.Equals(i)).ToList();
 
-                List<IStockEntity> stockDayList = new List<IStockEntity>();
-                stockData.ForEach(x => stockDayList.Add(x));
-                stockDayList.CalcAllKD();
-                this.StockContext.BulkInsertOrUpdate(stockDayList);
+                    List<IStockEntity> stockDayList = new List<IStockEntity>();
+                    stockData.ForEach(x => stockDayList.Add(x));
+                    stockDayList.CalcAllKD();
+                    this.StockContext.BulkInsertOrUpdate(stockDayList);
 
-                Logger.LogInformation($"CalcCurrentAllDayKD 計算個股 所有日KD 個股:{i} End!");
+                    Logger.LogInformation($"CalcCurrentAllDayKD 計算個股 所有日KD 個股:{i} End!");
+                }
+                Logger.LogInformation("CalcCurrentAllDayKD 計算個股 所有日KD End!");
+                transaction.Commit();
             }
-            Logger.LogInformation("CalcCurrentAllDayKD 計算個股 所有日KD End!");
+            catch (Exception ex)
+            {
+                Logger.LogInformation($"CalcCurrentAllDayKD 計算個股 所有日KD 發生錯誤, Error: {ex.Message}.");
+                transaction.Rollback();
+            }
         }
 
         /// <summary>
@@ -141,22 +210,31 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcCurrentAllWeekKD()
         {
-            foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+            if (!(DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Saturday))
             {
-                Logger.LogInformation($"CalcCurrentAllWeekKD 計算個股 所有週KD 個股:{i} Start!");
-
-                try
-                {
-                    this.ProcessStockAllWeekKD(i);
-                }
-                catch (Exception ex)
-                {
-                    this.Logger.LogError($"CalcCurrentAllWeekKD 計算個股 所有週KD 發生錯誤 個股:{i}, Error:{ex.Message}");
-                }
-
-                Logger.LogInformation($"CalcCurrentAllWeekKD 計算個股 所有週KD 個股:{i} End!");
+                this.Logger.LogInformation("CalcCurrentAllWeekKD 計算個股 所有週KD 必須在周六或周日執行");
+                return;
             }
-            Logger.LogInformation("CalcCurrentAllWeekKD 計算個股 所有週KD End!");
+
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            try
+            {
+                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+                {
+                    Logger.LogInformation($"CalcCurrentAllWeekKD 計算個股 所有週KD 個股:{i} Start!");
+
+                    this.ProcessStockAllWeekKD(i);
+
+                    Logger.LogInformation($"CalcCurrentAllWeekKD 計算個股 所有週KD 個股:{i} End!");
+                }
+                Logger.LogInformation("CalcCurrentAllWeekKD 計算個股 所有週KD End!");
+                transaction.Commit();
+            }
+            catch (Exception ex)
+            {
+                this.Logger.LogError($"CalcCurrentAllWeekKD 計算個股 所有週KD 發生錯誤, Error:{ex.Message}");
+                transaction.Rollback();
+            }
         }
 
         /// <summary>
@@ -165,22 +243,25 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcCurrentWeekKD()
         {
-            foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            try
             {
-                Logger.LogInformation($"CalcCurrentWeekKD 計算個股 該週KD 個股:{i} Start!");
-
-                try
+                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
                 {
+                    Logger.LogInformation($"CalcCurrentWeekKD 計算個股 該週KD 個股:{i} Start!");
+
                     this.ProcessStockCurrentWeekKD(i, 5);
-                }
-                catch (Exception ex)
-                {
-                    this.Logger.LogError($"CalcCurrentWeekKD 計算個股 該週KD 發生錯誤 個股:{i}, Error:{ex.Message}");
-                }
 
-                Logger.LogInformation($"CalcCurrentWeekKD 計算個股 該週KD 個股:{i} End!");
+                    Logger.LogInformation($"CalcCurrentWeekKD 計算個股 該週KD 個股:{i} End!");
+                }
+                Logger.LogInformation("CalcCurrentWeekKD 計算個股 該週KD End!");
+                transaction.Commit();
             }
-            Logger.LogInformation("CalcCurrentWeekKD 計算個股 該週KD End!");
+            catch (Exception ex)
+            {
+                this.Logger.LogError($"CalcCurrentWeekKD 計算個股 該週KD 發生錯誤, Error:{ex.Message}");
+                transaction.Rollback();
+            }
         }
 
         /// <summary>
@@ -195,11 +276,17 @@ namespace BX_Stock.Service
             // 上市個股代號
             List<int> insertTwseStockNo = insertStockList.Where(w => w.IsListed).Select(s => s.StockNo).ToList();
 
+            if (insertTwseStockNo.Count > 0)
+                this.Logger.LogInformation($"InsertStock 新增個股資料 新上市個股: {insertTwseStockNo.Select(s => s.ToString()).Aggregate((current, total) => current + "," + total)} .");
+
             // 上櫃個股代號
             List<int> insertTpexStockNo = insertStockList.Where(w => !w.IsListed).Select(s => s.StockNo).ToList();
 
+            if (insertTpexStockNo.Count > 0)
+                this.Logger.LogInformation($"InsertStock 新增個股資料 新上櫃個股: {insertTpexStockNo.Select(s => s.ToString()).Aggregate((current, total) => current + "," + total)} .");
+
             // 撈上市個股歷史資料
-            insertTwseStockNo.ForEach(x => this.TwseAPIService.ProcessStockHistoryData(x, endMonth: DateTime.Now.ToString("yyyy-MM")));
+            insertTwseStockNo.ForEach(x => this.TwseAPIService.ProcessStockHistoryData(x));
 
             // 撈上櫃個股歷史資料
             insertTpexStockNo.ForEach(x => this.TpexAPIService.ProcessStockHistoryData(x, endMonth: DateTime.Now.ToString("yyyy-MM")));
@@ -310,15 +397,12 @@ namespace BX_Stock.Service
             //List<StockWeek> deleteStockWeek = this.StockContext.Set<StockWeek>().Where(w => deleteStockNoList.Contains(w.StockNo)).ToList();
             //List<StockMonth> deleteStockMonth = this.StockContext.Set<StockMonth>().Where(w => deleteStockNoList.Contains(w.StockNo)).ToList();
 
-            using var transaction = this.StockContext.Database.BeginTransaction();
             this.StockContext.BulkUpdate(deleteStock);
 
             //this.StockContext.BulkDelete(deleteStock);
             //this.StockContext.BulkDelete(deleteStockDay);
             //this.StockContext.BulkDelete(deleteStockWeek);
             //this.StockContext.BulkDelete(deleteStockMonth);
-
-            transaction.Commit();
         }
     }
 }
