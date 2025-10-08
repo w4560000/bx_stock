@@ -2,6 +2,7 @@
 using BX_Stock.Models.Entity;
 using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,11 +17,6 @@ namespace BX_Stock.Service
     /// </summary>
     public class StockService : IStockService
     {
-        /// <summary>
-        /// DbContext
-        /// </summary>
-        private readonly StockContext StockContext;
-
         /// <summary>
         /// 網路爬蟲 Service
         /// </summary>
@@ -41,21 +37,22 @@ namespace BX_Stock.Service
         /// </summary>
         private readonly ILogger<StockService> Logger;
 
+        private readonly IServiceScopeFactory _scopeFactory;
+
         /// <summary>
         /// 個股Service
         /// </summary>
-        /// <param name="stockContext">DbContext</param>
         /// <param name="webCrawlerService">網路爬蟲Service</param>
         /// <param name="twseAPIService">證交所API Service</param>
         /// <param name="tpexAPIService">櫃買中心API Service</param>
         public StockService(
-            StockContext stockContext,
+            IServiceScopeFactory scopeFactory,
             IWebCrawlerService webCrawlerService,
             ITwseAPIService twseAPIService,
             ITpexAPIService tpexAPIService,
             ILogger<StockService> logger)
         {
-            this.StockContext = stockContext;
+            this._scopeFactory = scopeFactory;
             this.WebCrawlerService = webCrawlerService;
             this.TwseAPIService = twseAPIService;
             this.TpexAPIService = tpexAPIService;
@@ -77,6 +74,7 @@ namespace BX_Stock.Service
 
             try
             {
+
                 Logger.LogInformation("ProcessNewStock_Schedule1 每日排程 更新個股 Start!");
 
                 List<Stock> allStockData = new List<Stock>();
@@ -90,8 +88,11 @@ namespace BX_Stock.Service
                 allStockData.AddRange(await getAllListedStockNoTask);
                 allStockData.AddRange(await getAllCabinetStockNoTask);
 
+                using var scope = _scopeFactory.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
                 List<int> allStockNo = allStockData.Select(s => s.StockNo).ToList();
-                List<int> currentDbStockNo = this.StockContext.Set<Stock>().Select(s => s.StockNo).ToList();
+                List<int> currentDbStockNo = context.Set<Stock>().Select(s => s.StockNo).ToList();
 
                 // 目前DB沒有的個股，但市面上有的(新上市or新上櫃)，新增該股資料
                 List<int> insertStockNoList = allStockNo.Except(currentDbStockNo).ToList();
@@ -114,13 +115,16 @@ namespace BX_Stock.Service
         /// </summary>
         public void ProcessTodayStock_Schedule2(DateTime date)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             if (DateTimeHelper.IsHoliday(date))
             {
                 this.Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 必須在平日執行");
                 return;
             }
 
-            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
             try
             {
                 Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 Start!");
@@ -144,16 +148,19 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcNewStockAllWeekKD(DateTime date)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             if (!DateTimeHelper.IsHoliday(date))
             {
                 this.Logger.LogInformation("CalcNewStockAllWeekKD 計算新個股 所有週KD 必須在周六或周日執行");
                 return;
             }
 
-            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
             try
             {
-                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+                foreach (int i in context.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
                 {
                     Logger.LogInformation($"CalcNewStockAllWeekKD 計算新個股 所有週KD 個股:{i} Start!");
 
@@ -177,20 +184,23 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcCurrentAllDayKD()
         {
-            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
             try
             {
-                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+                foreach (int i in context.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
                 {
                     Logger.LogInformation($"CalcCurrentAllDayKD 計算個股 所有日KD 個股:{i} Start!");
 
                     // 取出個股每日資訊
-                    List<StockDay> stockData = this.StockContext.Set<StockDay>().Where(w => w.StockNo.Equals(i)).ToList();
+                    List<StockDay> stockData = context.Set<StockDay>().Where(w => w.StockNo.Equals(i)).ToList();
 
                     List<IStockEntity> stockDayList = new List<IStockEntity>();
                     stockData.ForEach(x => stockDayList.Add(x));
                     stockDayList.CalcAllKD();
-                    this.StockContext.BulkInsertOrUpdate(stockDayList);
+                    context.BulkInsertOrUpdate(stockDayList);
 
                     Logger.LogInformation($"CalcCurrentAllDayKD 計算個股 所有日KD 個股:{i} End!");
                 }
@@ -210,16 +220,20 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcCurrentAllWeekKD()
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             if (!(DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Saturday))
             {
                 this.Logger.LogInformation("CalcCurrentAllWeekKD 計算個股 所有週KD 必須在周六或周日執行");
                 return;
             }
 
-            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
             try
             {
-                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+
+                foreach (int i in context.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
                 {
                     Logger.LogInformation($"CalcCurrentAllWeekKD 計算個股 所有週KD 個股:{i} Start!");
 
@@ -243,10 +257,14 @@ namespace BX_Stock.Service
         /// </summary>
         public void CalcCurrentWeekKD()
         {
-            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
+            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
             try
             {
-                foreach (int i in this.StockContext.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
+
+                foreach (int i in context.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
                 {
                     Logger.LogInformation($"CalcCurrentWeekKD 計算個股 該週KD 個股:{i} Start!");
 
@@ -270,8 +288,11 @@ namespace BX_Stock.Service
         /// <param name="stockNoList">要新增的個股代號</param>
         private void InsertStock(List<Stock> insertStockList)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             // 新增個股代號
-            this.StockContext.BulkInsert(insertStockList);
+            context.BulkInsert(insertStockList);
 
             // 上市個股代號
             List<int> insertTwseStockNo = insertStockList.Where(w => w.IsListed).Select(s => s.StockNo).ToList();
@@ -300,18 +321,21 @@ namespace BX_Stock.Service
         /// <param name="stockNo">個股代號</param>
         private void ProcessStockCurrentWeekKD(int stockNo, int n = 9)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             // 取得當週 週一和週五日期
             (DateTime currentMondayOfWeekDate, DateTime currentFirDayOfWeekDate) = DateTime.Parse("2021-06-27").GetCurrentMondayAndFridayOfWeek();
 
             // 取得該個股當週 StockDay資料
-            List<StockDay> stockData = this.StockContext
+            List<StockDay> stockData = context
                                            .Set<StockDay>()
                                            .Where(w => w.StockNo.Equals(stockNo)
                                                     && w.Date >= currentMondayOfWeekDate
                                                     && w.Date <= currentFirDayOfWeekDate).ToList();
 
             // 取出該個股前n - 1週 StockWeek資料
-            List<StockWeek> stockWeeks = this.StockContext
+            List<StockWeek> stockWeeks = context
                                              .Set<StockWeek>()
                                              .Where(w => w.StockNo.Equals(stockNo))
                                              .OrderByDescending(o => o.Date)
@@ -325,7 +349,7 @@ namespace BX_Stock.Service
             currentStockWeek = currentStockWeek.OrderBy(o => o.Date).ToList();
             currentStockWeek.CalcCurrentKD(n);
 
-            this.StockContext.Add(currentStockWeek.Last());
+            context.Add(currentStockWeek.Last());
         }
 
         /// <summary>
@@ -336,9 +360,12 @@ namespace BX_Stock.Service
         /// <param name="stockNo">個股代號</param>
         private void ProcessStockAllWeekKD(int stockNo)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             // 取出個股每日資訊
             DateTime date = DateTime.Parse("2021-06-27");
-            List<StockDay> stockData = this.StockContext.Set<StockDay>().Where(w => w.StockNo.Equals(stockNo) && w.Date <= date).ToList();
+            List<StockDay> stockData = context.Set<StockDay>().Where(w => w.StockNo.Equals(stockNo) && w.Date <= date).ToList();
             List<List<StockDay>> stockDataListOfWeeks = new List<List<StockDay>>();
 
             // 以年做區隔 一年一年處理
@@ -354,7 +381,7 @@ namespace BX_Stock.Service
 
             // 轉換成Entity並計算週KD
             List<IStockEntity> stockWeek = stockDataListOfWeeks.AsStockWeekOrMonth<StockWeek>().CalcAllKD(5);
-            this.StockContext.BulkInsertOrUpdate(stockWeek);
+            context.BulkInsertOrUpdate(stockWeek);
         }
 
         /// <summary>
@@ -363,8 +390,11 @@ namespace BX_Stock.Service
         /// <param name="stockNo">個股代號</param>
         private void ProcessStockMonthKD(int stockNo)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             // 取出個股每日資訊
-            List<StockDay> stockData = this.StockContext.Set<StockDay>().Where(w => w.StockNo.Equals(stockNo)).ToList();
+            List<StockDay> stockData = context.Set<StockDay>().Where(w => w.StockNo.Equals(stockNo)).ToList();
             List<List<StockDay>> stockDataListOfMonths = new List<List<StockDay>>();
 
             // 以年做區隔 一年一年處理
@@ -380,7 +410,7 @@ namespace BX_Stock.Service
 
             // 轉換成Entity並計算月KD
             List<IStockEntity> stockMonth = stockDataListOfMonths.AsStockWeekOrMonth<StockMonth>().CalcAllKD(5);
-            this.StockContext.BulkInsertOrUpdate(stockMonth);
+            context.BulkInsertOrUpdate(stockMonth);
         }
 
         /// <summary>
@@ -389,15 +419,18 @@ namespace BX_Stock.Service
         /// <param name="deleteStockNoList">欲刪除的個股代號清單</param>
         private void DeleteStockData(List<int> deleteStockNoList)
         {
+            using var scope = _scopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+
             // 改為軟刪除 不刪除資料
-            List<Stock> deleteStock = this.StockContext.Set<Stock>().Where(w => deleteStockNoList.Contains(w.StockNo)).ToList();
+            List<Stock> deleteStock = context.Set<Stock>().Where(w => deleteStockNoList.Contains(w.StockNo)).ToList();
             deleteStock.ForEach(x => x.IsEnabled = false);
 
             //List<StockDay> deleteStockDay = this.StockContext.Set<StockDay>().Where(w => deleteStockNoList.Contains(w.StockNo)).ToList();
             //List<StockWeek> deleteStockWeek = this.StockContext.Set<StockWeek>().Where(w => deleteStockNoList.Contains(w.StockNo)).ToList();
             //List<StockMonth> deleteStockMonth = this.StockContext.Set<StockMonth>().Where(w => deleteStockNoList.Contains(w.StockNo)).ToList();
 
-            this.StockContext.BulkUpdate(deleteStock);
+            context.BulkUpdate(deleteStock);
 
             //this.StockContext.BulkDelete(deleteStock);
             //this.StockContext.BulkDelete(deleteStockDay);

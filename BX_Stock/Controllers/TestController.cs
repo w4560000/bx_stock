@@ -32,7 +32,7 @@ namespace BX_Stock.Controllers
             var date = DateTime.Now;
 
             // 每日排程 更新個股
-            //StockService.ProcessNewStock_Schedule1(date);
+            StockService.ProcessNewStock_Schedule1(date);
 
             // 每日排程 新增當日個股資料
             //StockService.ProcessTodayStock_Schedule2();
