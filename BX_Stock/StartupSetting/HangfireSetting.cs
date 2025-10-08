@@ -1,5 +1,6 @@
 ﻿using BX_Stock.Service;
 using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -17,7 +18,11 @@ namespace BX_Stock
         /// <param name="services">服務集合</param>
         public static void SettingHangfire(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddHangfire(config => config.UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection")));
+            services.AddHangfire(config => config.UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection"),
+                new SqlServerStorageOptions
+                {
+                    PrepareSchemaIfNecessary = true
+                }));
         }
 
         /// <summary>

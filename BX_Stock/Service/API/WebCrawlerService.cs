@@ -50,6 +50,7 @@ namespace BX_Stock.Service
             List<Stock> stockNoDto = new List<Stock>();
             bool nextRowGetStock = false;
 
+            var date = DateTime.Now;
             foreach (IElement element in trCount)
             {
                 IElement tdB = element.QuerySelector("td > b");
@@ -74,7 +75,8 @@ namespace BX_Stock.Service
                                 StockNo = Convert.ToInt32(data[0].Split(" ")[0]), 
                                 StockName = data[1], 
                                 IsListed = true, 
-                                IsEnabled = true
+                                IsEnabled = true,
+                                CreateDate = date,
                             });
                     }
 
@@ -102,6 +104,7 @@ namespace BX_Stock.Service
 
             List<Stock> stockNoDto = new List<Stock>();
             bool nextRowGetStock = false;
+            var date = DateTime.Now;
 
             foreach (IElement element in trCount)
             {
@@ -126,7 +129,8 @@ namespace BX_Stock.Service
                             StockNo =  Convert.ToInt32(data[0].Split(" ")[0]),
                             StockName = data[1], 
                             IsListed = false, 
-                            IsEnabled = true
+                            IsEnabled = true,
+                            CreateDate = date,
                         });
                     }
 

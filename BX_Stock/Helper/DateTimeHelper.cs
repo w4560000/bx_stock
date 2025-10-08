@@ -88,6 +88,6 @@ namespace BX_Stock.Helper
         /// 是否為假日
         /// </summary>
         /// <returns>是否為假日</returns>
-        public static bool IsHoliday() => DateTime.Now.DayOfWeek == DayOfWeek.Saturday || DateTime.Now.DayOfWeek == DayOfWeek.Sunday;
+        public static bool IsHoliday(DateTime date) => date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
     }
 }

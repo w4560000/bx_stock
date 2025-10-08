@@ -1,10 +1,15 @@
-﻿namespace BX_Stock.Models.Entity
+﻿using System;
+using System.Collections.Generic;
+
+namespace BX_Stock.Models.Entity
 {
     public partial class Stock
     {
         public int StockNo { get; set; }
         public string StockName { get; set; }
         public bool IsListed { get; set; }
+        public DateTime CreateDate { get; set; }
         public bool IsEnabled { get; set; }
+        public DateTime? UnabledDate { get; set; }
     }
 }

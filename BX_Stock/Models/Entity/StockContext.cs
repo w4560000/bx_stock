@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace BX_Stock.Models.Entity
 {
@@ -23,7 +25,7 @@ namespace BX_Stock.Models.Entity
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server= .; Database=Stock; User Id=leo; Password=334567;");
+                optionsBuilder.UseSqlServer("Server=.;Database=Stock;User ID=leo;Password=123456;");
             }
         }
 
@@ -35,10 +37,14 @@ namespace BX_Stock.Models.Entity
 
                 entity.Property(e => e.StockNo).ValueGeneratedNever();
 
+                entity.Property(e => e.CreateDate).HasColumnType("date");
+
                 entity.Property(e => e.StockName)
                     .IsRequired()
                     .HasMaxLength(10)
                     .IsFixedLength();
+
+                entity.Property(e => e.UnabledDate).HasColumnType("date");
             });
 
             modelBuilder.Entity<StockDay>(entity =>

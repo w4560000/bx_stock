@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace BX_Stock.Service
 {
@@ -66,16 +67,14 @@ namespace BX_Stock.Service
         /// 若撈取的資料與現有資料庫股號有差異
         /// 則移除下架的個股與相關資訊，並新增上架的個股與相關資訊
         /// </summary>
-        ///
-        public void ProcessNewStock_Schedule1()
+        public async Task ProcessNewStock_Schedule1(DateTime date)
         {
-            if (DateTimeHelper.IsHoliday())
+            if (DateTimeHelper.IsHoliday(date))
             {
                 this.Logger.LogInformation("ProcessNewStock_Schedule1 每日排程 更新個股 必須在平日執行");
                 return;
             }
 
-            using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(this.StockContext.Database, System.Data.IsolationLevel.ReadUncommitted);
             try
             {
                 Logger.LogInformation("ProcessNewStock_Schedule1 每日排程 更新個股 Start!");
@@ -83,10 +82,13 @@ namespace BX_Stock.Service
                 List<Stock> allStockData = new List<Stock>();
 
                 // 爬取上市股票
-                allStockData.AddRange(this.WebCrawlerService.GetAllListedStockNoAsync().GetAwaiter().GetResult());
+                var getAllListedStockNoTask = this.WebCrawlerService.GetAllListedStockNoAsync();
 
                 // 爬取上櫃股票
-                allStockData.AddRange(this.WebCrawlerService.GetAllCabinetStockNoAsync().GetAwaiter().GetResult());
+                var getAllCabinetStockNoTask = this.WebCrawlerService.GetAllCabinetStockNoAsync();
+
+                allStockData.AddRange(await getAllListedStockNoTask);
+                allStockData.AddRange(await getAllCabinetStockNoTask);
 
                 List<int> allStockNo = allStockData.Select(s => s.StockNo).ToList();
                 List<int> currentDbStockNo = this.StockContext.Set<Stock>().Select(s => s.StockNo).ToList();
@@ -100,21 +102,19 @@ namespace BX_Stock.Service
                 this.DeleteStockData(deleteStockNoList);
 
                 Logger.LogInformation("ProcessNewStock_Schedule1 每日排程 更新個股  End!");
-                transaction.Commit();
             }
             catch (Exception ex)
             {
                 Logger.LogError($"ProcessNewStock_Schedule1 每日排程 更新個股 發生錯誤, Error: {ex.Message}.");
-                transaction.Rollback();
             }
         }
 
         /// <summary>
         /// 每日排程 新增當日個股 (Schedule2)
         /// </summary>
-        public void ProcessTodayStock_Schedule2()
+        public void ProcessTodayStock_Schedule2(DateTime date)
         {
-            if (DateTimeHelper.IsHoliday())
+            if (DateTimeHelper.IsHoliday(date))
             {
                 this.Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 必須在平日執行");
                 return;
@@ -142,9 +142,9 @@ namespace BX_Stock.Service
         /// 計算新個股 所有週KD
         /// 因是新股, 故重新計算週KD
         /// </summary>
-        public void CalcNewStockAllWeekKD()
+        public void CalcNewStockAllWeekKD(DateTime date)
         {
-            if (!DateTimeHelper.IsHoliday())
+            if (!DateTimeHelper.IsHoliday(date))
             {
                 this.Logger.LogInformation("CalcNewStockAllWeekKD 計算新個股 所有週KD 必須在周六或周日執行");
                 return;
