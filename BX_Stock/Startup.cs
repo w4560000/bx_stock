@@ -1,5 +1,6 @@
 using BX_Stock.Models;
 using BX_Stock.Models.Entity;
+using BX_Stock.Repository;
 using BX_Stock.Service;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
@@ -9,6 +10,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Data;
+using System.Data.SqlClient;
 using System.Text;
 
 namespace BX_Stock
@@ -28,17 +31,17 @@ namespace BX_Stock
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllersWithViews();
-            services.AddDbContext<StockContext>(options =>
-            {
-                options.UseSqlServer(this.Configuration.GetConnectionString("DefaultConnection"));
-                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-            });
+
+            services.AddTransient<IDbConnection>(sp =>
+                new SqlConnection(sp.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection"))
+            );
 
             // µù¥UAutoMapper
             services.SetAutoMapper();
 
             // DI
             services.AddSingleton<ITaskProvider, TaskProvider>();
+            services.AddSingleton<StockRepository>();
             services.AddScoped<IBaseApiService, BaseApiService>();
             services.AddScoped<IWebCrawlerService, WebCrawlerService>();
             services.AddScoped<ITwseAPIService, TwseAPIService>();
@@ -76,7 +79,6 @@ namespace BX_Stock
                 app.UseHsts();
             }
             app.UseHttpsRedirection();
-
 
             app.UseRouting();
 

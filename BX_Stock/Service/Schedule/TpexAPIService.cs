@@ -21,11 +21,6 @@ namespace BX_Stock.Service
         private readonly IBaseApiService BaseApiService;
 
         /// <summary>
-        /// DbContext
-        /// </summary>
-        private readonly StockContext StockContext;
-
-        /// <summary>
         /// Mapper
         /// </summary>
         private readonly IMapper Mapper;
@@ -43,13 +38,11 @@ namespace BX_Stock.Service
         /// <param name="mapper">Mapper</param>
         public TpexAPIService(
             IBaseApiService baseApiService,
-            StockContext stockContext,
             IMapper mapper,
             ILogger<TpexAPIService> logger)
         {
             this.BaseApiService = baseApiService;
             this.Mapper = mapper;
-            this.StockContext = stockContext;
             this.Logger = logger;
         }
 
@@ -59,11 +52,12 @@ namespace BX_Stock.Service
         /// <returns>股票代號清單</returns>
         public void ProcessStockScheduleFirst(int start, int end)
         {
-            List<int> currentDbStockNo = this.StockContext.Set<Stock>().Where(w => !w.IsListed).Select(s => s.StockNo).ToList();
-            currentDbStockNo = currentDbStockNo.Where(w => start <= w && w < end).ToList();
+            // todo
+            //List<int> currentDbStockNo = this.StockContext.Set<Stock>().Where(w => !w.IsListed).Select(s => s.StockNo).ToList();
+            //currentDbStockNo = currentDbStockNo.Where(w => start <= w && w < end).ToList();
 
-            // 撈歷史資料
-            currentDbStockNo.ForEach(x => this.ProcessStockHistoryData(x));
+            //// 撈歷史資料
+            //currentDbStockNo.ForEach(x => this.ProcessStockHistoryData(x));
 
             // 計算週KD 月KD
             //currentDbStockNo.ForEach(x => this.StockService.ProcessStockWeekKD(x));
@@ -78,33 +72,34 @@ namespace BX_Stock.Service
         /// <param name="endMonth">查詢結束時間</param>
         public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2021-06")
         {
-            this.Logger.LogInformation($"新增上櫃個股 : {stockNo} start!");
-            DateTime twseDataStartMonth = DateTime.Parse(startMonth);
-            List<IStockEntity> result = new List<IStockEntity>();
+            // todo
+            //this.Logger.LogInformation($"新增上櫃個股 : {stockNo} start!");
+            //DateTime twseDataStartMonth = DateTime.Parse(startMonth);
+            //List<IStockEntity> result = new List<IStockEntity>();
 
-            foreach (DateTime date in twseDataStartMonth.EachMonthTo(DateTime.Parse(endMonth)))
-            {
-                //(StockDayDto stockDayDto, int recordCount) = RetryHelper.RetryIfThrown<Exception, (StockDayDto, int)>(() =>
-                //                                                    this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult(), 3, 3);
+            //foreach (DateTime date in twseDataStartMonth.EachMonthTo(DateTime.Parse(endMonth)))
+            //{
+            //    //(StockDayDto stockDayDto, int recordCount) = RetryHelper.RetryIfThrown<Exception, (StockDayDto, int)>(() =>
+            //    //                                                    this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult(), 3, 3);
 
-                (StockDayDto stockDayDto, int recordCount) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
+            //    (StockDayDto stockDayDto, int recordCount) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
 
-                if (recordCount < 1)
-                {
-                    continue;
-                }
+            //    if (recordCount < 1)
+            //    {
+            //        continue;
+            //    }
 
-                result.AddRange(this.Mapper.Map<List<StockDay>>(stockDayDto.Data));
-            }
+            //    result.AddRange(this.Mapper.Map<List<StockDay>>(stockDayDto.Data));
+            //}
 
-            result.ForEach(f => f.StockNo = stockNo);
+            //result.ForEach(f => f.StockNo = stockNo);
 
-            // 計算KD
-            result.CalcAllKD();
+            //// 計算KD
+            //result.CalcAllKD();
 
-            this.StockContext.AddRange(result);
-            this.StockContext.SaveChanges();
-            this.Logger.LogInformation($"新增上櫃個股 : {stockNo} end!");
+            //this.StockContext.AddRange(result);
+            //this.StockContext.SaveChanges();
+            //this.Logger.LogInformation($"新增上櫃個股 : {stockNo} end!");
         }
 
         /// <summary>

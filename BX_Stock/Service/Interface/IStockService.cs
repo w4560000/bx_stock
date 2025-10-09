@@ -17,34 +17,34 @@ namespace BX_Stock.Service
         /// <returns>股票代號清單</returns>
         Task ProcessNewStock_Schedule1(DateTime date);
 
-        /// <summary>
-        /// 每日排程 新增當日個股 (Schedule2)
-        /// </summary>
-        void ProcessTodayStock_Schedule2(DateTime date);
+        ///// <summary>
+        ///// 每日排程 新增當日個股 (Schedule2)
+        ///// </summary>
+        //void ProcessTodayStock_Schedule2(DateTime date);
 
-        /// <summary>
-        /// 週六 Job
-        /// 計算新個股 所有週KD
-        /// 因是新股, 故重新計算週KD
-        /// </summary>
-        void CalcNewStockAllWeekKD(DateTime date);
+        ///// <summary>
+        ///// 週六 Job
+        ///// 計算新個股 所有週KD
+        ///// 因是新股, 故重新計算週KD
+        ///// </summary>
+        //void CalcNewStockAllWeekKD(DateTime date);
 
-        /// <summary>
-        /// 計算個股 所有日KD
-        /// Init資料時使用
-        /// </summary>
-        void CalcCurrentAllDayKD();
+        ///// <summary>
+        ///// 計算個股 所有日KD
+        ///// Init資料時使用
+        ///// </summary>
+        //void CalcCurrentAllDayKD();
 
-        /// <summary>
-        /// 計算個股 所有週KD
-        /// Init資料時使用
-        /// </summary>
-        void CalcCurrentAllWeekKD();
+        ///// <summary>
+        ///// 計算個股 所有週KD
+        ///// Init資料時使用
+        ///// </summary>
+        //void CalcCurrentAllWeekKD();
 
-        /// <summary>
-        /// 計算個股 該週KD
-        /// 只能在週六 or 週日 執行
-        /// </summary>
-        void CalcCurrentWeekKD();
+        ///// <summary>
+        ///// 計算個股 該週KD
+        ///// 只能在週六 or 週日 執行
+        ///// </summary>
+        //void CalcCurrentWeekKD();
     }
 }

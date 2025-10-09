@@ -12,6 +12,8 @@ CREATE USER [leo] FOR LOGIN [leo];
 ALTER SERVER ROLE [sysadmin] ADD MEMBER [leo];
 ```
 
+> 已移除 EF 改為 Dapper 串 SP，以下無再使用
+
 - 安裝 ef tool (僅首次需安裝)
 
 ```
@@ -19,10 +21,6 @@ dotnet tool install --global dotnet-ef
 
 dotnet ef database update
 ```
-
-
-
-
 
 - 當DB Table 更新回Model
 
