@@ -61,15 +61,38 @@ namespace BX_Stock.Repository
                 {
                     UDT_Stock = dataList.ToDataTable().AsTableValuedParameter("UDT_Stock")
                 };
-                var dbResult = await _dbConnection.ExecuteAsync("SP_InSertUpt_Stock", param, commandType: CommandType.StoredProcedure);
+                var dbResult = await _dbConnection.ExecuteAsync("SP_InsertUpt_Stock", param, commandType: CommandType.StoredProcedure);
 
-                _logger.LogInformation($"QueryStock 執行結束, 新增筆數:{dbResult}");
+                _logger.LogInformation($"InsertStock 執行結束, 新增筆數:{dbResult}");
 
                 return dbResult;
             }
             catch (Exception ex)
             {
                 _logger.LogError($"InsertStock 查詢 發生錯誤, Error: {ex.Message}.");
+                throw;
+            }
+        }
+
+        public async Task<int> InsertStockDay(List<StockDay> dataList)
+        {
+            try
+            {
+                _logger.LogInformation($"InsertStockDay 執行, 筆數:{dataList.Count}");
+
+                var param = new
+                {
+                    UDT_StockDay = dataList.ToDataTable().AsTableValuedParameter("UDT_StockDay")
+                };
+                var dbResult = await _dbConnection.ExecuteAsync("SP_Insert_StockDay", param, commandType: CommandType.StoredProcedure);
+
+                _logger.LogInformation($"InsertStockDay 執行結束, 新增筆數:{dbResult}");
+
+                return dbResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"InsertStockDay 查詢 發生錯誤, Error: {ex.Message}.");
                 throw;
             }
         }

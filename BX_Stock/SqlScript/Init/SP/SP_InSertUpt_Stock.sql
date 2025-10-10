@@ -1,8 +1,8 @@
 ﻿USE [Stock]
 GO
 
-IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_InSertUpt_Stock]') AND type IN (N'P', N'PC'))
-DROP PROCEDURE [dbo].[SP_InSertUpt_Stock]
+IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SP_InsertUpt_Stock]') AND type IN (N'P', N'PC'))
+DROP PROCEDURE [dbo].[SP_InsertUpt_Stock]
 GO
 
 SET ANSI_NULLS ON
@@ -33,16 +33,16 @@ DECLARE @P1 UDT_Stock;
 
 INSERT INTO @P1 (StockNo, StockName, IsListed, CreateDate, IsEnabled, UnabledDate)
 VALUES 
-    (1002, NULL, NULL, NULL, NULL, NULL)
+    (1002, 'Test', 1, GETDATE(), 1, NULL)
 
-EXEC Stock.dbo.SP_InSertUpt_Stock
+EXEC Stock.dbo.SP_InsertUpt_Stock
     @UDT_Stock = @P1;
 
 
 */
 
 
-CREATE PROCEDURE [dbo].[SP_InSertUpt_Stock]
+CREATE PROCEDURE [dbo].[SP_InsertUpt_Stock]
 @UDT_Stock UDT_Stock READONLY
 AS
 BEGIN
@@ -66,5 +66,5 @@ END
 
 GO
 
-GRANT EXECUTE ON [SP_InSertUpt_Stock] TO [PUBLIC] AS [dbo] ;
+GRANT EXECUTE ON [SP_InsertUpt_Stock] TO [PUBLIC] AS [dbo] ;
 GO

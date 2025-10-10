@@ -11,13 +11,15 @@ GO
 CREATE TABLE [dbo].[StockDay](
 	[StockNo] [int] NOT NULL,
 	[Date] [datetime] NOT NULL,
+	[TradeVolume] [bigint] NOT NULL,
 	[TradeValue] [bigint] NOT NULL,
 	[OpeningPrice] [decimal](9, 2) NOT NULL,
 	[HighestPrice] [decimal](9, 2) NOT NULL,
 	[LowestPrice] [decimal](9, 2) NOT NULL,
 	[ClosingPrice] [decimal](9, 2) NOT NULL,
 	[Change] [decimal](9, 2) NOT NULL,
-	[Transaction] [int] NOT NULL
+	[Transaction] [int] NOT NULL,
+	[CreateDate] [datetime] NOT NULL,
  CONSTRAINT [PK_DayStock] PRIMARY KEY CLUSTERED 
 (
 	[StockNo] ASC,

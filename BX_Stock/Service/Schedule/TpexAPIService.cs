@@ -139,7 +139,7 @@ namespace BX_Stock.Service
                         {
                             Date = DateTime.Parse(stockData.AaData[i][0].ConvertToADType().Substring(0, 10)),
                             TradeVolume = Convert.ToInt32(stockData.AaData[i][1].Replace(",", string.Empty)),
-                            TradeValue = Convert.ToDouble(stockData.AaData[i][2].CheckDoubleValue()),
+                            TradeValue = Convert.ToInt64(stockData.AaData[i][2].Replace(",", string.Empty)),
                             OpeningPrice = Convert.ToDouble(stockData.AaData[i][3].CheckDoubleValue()),
                             HighestPrice = Convert.ToDouble(stockData.AaData[i][4].CheckDoubleValue()),
                             LowestPrice = Convert.ToDouble(stockData.AaData[i][5].CheckDoubleValue()),

@@ -20,7 +20,17 @@ namespace BX_Stock.Service
         ///// <summary>
         ///// 每日排程 新增當日個股 (Schedule2)
         ///// </summary>
-        //void ProcessTodayStock_Schedule2(DateTime date);
+        //Task ProcessTodayStock_Schedule2(DateTime date);
+
+        /// <summary>
+        /// 處理個股歷史資料 (初始化)
+        /// </summary>
+        Task ProcessStockHistoryData();
+
+        /// <summary>
+        /// 重撈個股日資料 (補資料用)
+        /// </summary>
+        Task ProcessStockDay(DateTime date);
 
         ///// <summary>
         ///// 週六 Job

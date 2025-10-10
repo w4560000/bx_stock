@@ -2,10 +2,13 @@
 using BX_Stock.Service;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading.Tasks;
 
 namespace BX_Stock.Controllers
 {
-    public class TestController : Controller
+    [Route("api/[controller]/[action]")]
+    [ApiController]
+    public class TestController : ControllerBase
     {
         private readonly ITwseAPIService TwseAPIService;
 
@@ -23,12 +26,21 @@ namespace BX_Stock.Controllers
             this.TpexAPIService = tpexAPIService;
         }
 
-        public IActionResult Index()
+        [HttpPost]
+        public async Task<string> ProcessNewStock_Schedule1()
         {
-            var date = DateTime.Now;
+            try
+            {
+                var date = DateTime.Now;
 
-            // 每日排程 更新個股
-            StockService.ProcessNewStock_Schedule1(date);
+                // 每日排程 更新個股
+                await StockService.ProcessNewStock_Schedule1(date);
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
 
             // 每日排程 新增當日個股資料
             //StockService.ProcessTodayStock_Schedule2();
@@ -54,7 +66,34 @@ namespace BX_Stock.Controllers
             //StockService.CalcCurrentWeekKD();
 
             //bool a = this.StockContext.Set<Stock>().Where(w => w.StockNo == 1101).Select(s => s.IsEnabled).FirstOrDefault();
-            return this.View();
+        }
+
+        [HttpPost]
+        public async Task<string> ProcessStockHistoryData()
+        {
+            try
+            {
+                await StockService.ProcessStockHistoryData();
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
+        }
+
+        [HttpPost]
+        public async Task<string> ProcessStockDay(DateTime date)
+        {
+            try
+            {
+                await StockService.ProcessStockDay(date);
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
         }
     }
 }

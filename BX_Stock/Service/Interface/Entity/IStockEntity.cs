@@ -16,12 +16,12 @@ namespace BX_Stock.Service
         decimal ClosingPrice { get; set; }
         decimal Change { get; set; }
         int Transaction { get; set; }
-        decimal K { get; set; }
-        decimal D { get; set; }
-        decimal Ema12 { get; set; }
-        decimal Ema26 { get; set; }
-        decimal Dif { get; set; }
-        decimal Dea { get; set; }
-        decimal Osc { get; set; }
+        //decimal K { get; set; }
+        //decimal D { get; set; }
+        //decimal Ema12 { get; set; }
+        //decimal Ema26 { get; set; }
+        //decimal Dif { get; set; }
+        //decimal Dea { get; set; }
+        //decimal Osc { get; set; }
     }
 }

@@ -23,24 +23,26 @@ namespace BX_Stock.Service
         /// <summary>
         /// 網路爬蟲 Service
         /// </summary>
-        private readonly IWebCrawlerService WebCrawlerService;
+        private readonly IWebCrawlerService _webCrawlerService;
 
         /// <summary>
         /// 證交所API Service
         /// </summary>
-        private readonly ITwseAPIService TwseAPIService;
+        private readonly ITwseAPIService _twseAPIService;
 
         /// <summary>
         /// 櫃買中心API Service
         /// </summary>
-        private readonly ITpexAPIService TpexAPIService;
+        private readonly ITpexAPIService _tpexAPIService;
 
         /// <summary>
         /// Log
         /// </summary>
-        private readonly ILogger<StockService> Logger;
+        private readonly ILogger<StockService> _logger;
 
-        private readonly IServiceScopeFactory _scopeFactory;
+        /// <summary>
+        /// StockRepository
+        /// </summary>
         private readonly StockRepository _stockRepository;
 
         /// <summary>
@@ -50,19 +52,17 @@ namespace BX_Stock.Service
         /// <param name="twseAPIService">證交所API Service</param>
         /// <param name="tpexAPIService">櫃買中心API Service</param>
         public StockService(
-            IServiceScopeFactory scopeFactory,
             IWebCrawlerService webCrawlerService,
             ITwseAPIService twseAPIService,
             ITpexAPIService tpexAPIService,
             StockRepository stockRepository,
             ILogger<StockService> logger)
         {
-            this._scopeFactory = scopeFactory;
-            this.WebCrawlerService = webCrawlerService;
-            this.TwseAPIService = twseAPIService;
-            this.TpexAPIService = tpexAPIService;
+            this._webCrawlerService = webCrawlerService;
+            this._twseAPIService = twseAPIService;
+            this._tpexAPIService = tpexAPIService;
             this._stockRepository = stockRepository;
-            this.Logger = logger;
+            this._logger = logger;
         }
 
         /// <summary>
@@ -75,23 +75,23 @@ namespace BX_Stock.Service
             try
             {
                 Stopwatch sw = Stopwatch.StartNew();
-                Logger.LogInformation($"ProcessNewStock_Schedule1 更新個股 Start, 耗時:{sw.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"ProcessNewStock_Schedule1 更新個股 Start, 耗時:{sw.ElapsedMilliseconds}ms");
 
                 List<Stock> allStockData = new List<Stock>();
 
                 // 爬取上市股票
-                var getAllListedStockNoTask = this.WebCrawlerService.GetAllListedStockNoAsync();
+                var getAllListedStockNoTask = this._webCrawlerService.GetAllListedStockNoAsync();
 
                 // 爬取上櫃股票
-                var getAllCabinetStockNoTask = this.WebCrawlerService.GetAllCabinetStockNoAsync();
+                var getAllCabinetStockNoTask = this._webCrawlerService.GetAllCabinetStockNoAsync();
 
                 allStockData.AddRange(await getAllListedStockNoTask);
 
-                Logger.LogInformation($"ProcessNewStock_Schedule1 爬取上市股票, 耗時:{sw.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"ProcessNewStock_Schedule1 爬取上市股票, 耗時:{sw.ElapsedMilliseconds}ms");
 
                 allStockData.AddRange(await getAllCabinetStockNoTask);
 
-                Logger.LogInformation($"ProcessNewStock_Schedule1 爬取上櫃股票, 耗時:{sw.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"ProcessNewStock_Schedule1 爬取上櫃股票, 耗時:{sw.ElapsedMilliseconds}ms");
 
                 List<int> allStockNo = allStockData.Select(s => s.StockNo).ToList();
                 List<int> currentDbStockNo = (await _stockRepository.QueryStock(new QueryStockDto()))
@@ -102,50 +102,98 @@ namespace BX_Stock.Service
                 List<int> insertStockNoList = allStockNo.Except(currentDbStockNo).ToList();
                 await this.InsertUptStock(allStockData.Where(x => insertStockNoList.Contains(x.StockNo)).ToList());
 
-                Logger.LogInformation($"ProcessNewStock_Schedule1 寫入DB, 耗時:{sw.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"ProcessNewStock_Schedule1 寫入DB, 耗時:{sw.ElapsedMilliseconds}ms");
 
                 //// 目前DB有的個股，但市面上沒有的(下市or下櫃)，刪除該股在DB的資料
                 List<int> deleteStockNoList = currentDbStockNo.Except(allStockNo).ToList();
                 await this.DeleteStockData(deleteStockNoList);
 
-                Logger.LogInformation($"ProcessNewStock_Schedule1 更新個股結束, 耗時:{sw.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"ProcessNewStock_Schedule1 更新個股結束, 耗時:{sw.ElapsedMilliseconds}ms");
             }
             catch (Exception ex)
             {
-                Logger.LogError($"ProcessNewStock_Schedule1 更新個股 發生錯誤, Error: {ex.Message}.");
+                _logger.LogError($"ProcessNewStock_Schedule1 更新個股 發生錯誤, Error: {ex.Message}.");
             }
         }
 
-        ///// <summary>
-        ///// 每日排程 新增當日個股 (Schedule2)
-        ///// </summary>
-        //public void ProcessTodayStock_Schedule2(DateTime date)
-        //{
-        //    using var scope = _scopeFactory.CreateScope();
-        //    var context = scope.ServiceProvider.GetRequiredService<StockContext>();
+        /// <summary>
+        /// 撈取個股歷史資料 (初始化用)
+        /// </summary>
+        public async Task ProcessStockHistoryData()
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"ProcessStockHistoryData Start, 耗時:{sw.ElapsedMilliseconds}ms");
 
-        //    if (DateTimeHelper.IsHoliday(date))
-        //    {
-        //        this.Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 必須在平日執行");
-        //        return;
-        //    }
+                var stockNoList = (await _stockRepository.QueryStock(new QueryStockDto() { IsEnabled = true }))
+                                                         .Select(s => s.StockNo)
+                                                         .ToList();
 
-        //    using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
-        //    try
-        //    {
-        //        Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 Start!");
+                foreach (var stockNo in stockNoList)
+                {
+                    Stopwatch sw1 = Stopwatch.StartNew();
 
-        //        this.TwseAPIService.ProcessStockToDayData(1101);
+                    _logger.LogInformation($"ProcessStockHistoryData 個股: {stockNo}, 耗時:{sw1.ElapsedMilliseconds}ms");
 
-        //        Logger.LogInformation("ProcessTodayStock_Schedule2 每日排程 新增當日個股 End!");
-        //        transaction.Commit();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Logger.LogInformation($"ProcessTodayStock_Schedule2 每日排程 新增當日個股 發生錯誤, Error: {ex.Message}.");
-        //        transaction.Rollback();
-        //    }
-        //}
+                    var stockDayList = await this._twseAPIService.GetStockHistoryData(stockNo);
+
+                    // 新增個股歷史日資料
+                    await _stockRepository.InsertStockDay(stockDayList);
+
+                    _logger.LogInformation($"ProcessStockHistoryData 個股: {stockNo} 撈完,  耗時:{sw1.ElapsedMilliseconds}ms");
+                }
+
+                _logger.LogInformation($"ProcessStockHistoryData 結束, 耗時:{sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"ProcessStockHistoryData 發生錯誤, Error: {ex.Message}.");
+            }
+        }
+
+        /// <summary>
+        /// 重撈個股日資料 (補資料用)
+        /// </summary>
+        public async Task ProcessStockDay(DateTime date)
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"ProcessStockDay Start, 日期: {date:yyyy-MM-dd}, 耗時: {sw.ElapsedMilliseconds}ms");
+
+                var stockNoList = (await _stockRepository.QueryStock(new QueryStockDto() { IsEnabled = true }))
+                                         .Select(s => s.StockNo)
+                                         .ToList();
+
+                // todo remove
+                stockNoList = stockNoList.Take(1).ToList();
+
+                var stockDayList = new List<StockDay>();
+
+                foreach (var stockNo in stockNoList)
+                {
+                    Stopwatch sw1 = Stopwatch.StartNew();
+
+                    _logger.LogInformation($"ProcessStockDay 個股: {stockNo}, 日期: {date:yyyy-MM-dd}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    var stockDay = await this._twseAPIService.GetStockDayData(stockNo, date);
+
+                    stockDayList.Add(stockDay);
+
+                    _logger.LogInformation($"ProcessStockDay 個股: {stockNo} 完成, 日期: {date:yyyy-MM-dd},  耗時: {sw1.ElapsedMilliseconds}ms");
+                }
+
+                // 新增個股歷史日資料
+                await _stockRepository.InsertStockDay(stockDayList);
+
+                _logger.LogInformation($"ProcessStockDay End, 日期: {date:yyyy-MM-dd}, 耗時: {sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"ProcessStockDay 發生錯誤, Error: {ex.Message}.");
+            }
+        }
 
         ///// <summary>
         ///// 週六 Job
@@ -238,7 +286,6 @@ namespace BX_Stock.Service
         //    using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
         //    try
         //    {
-
         //        foreach (int i in context.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
         //        {
         //            Logger.LogInformation($"CalcCurrentAllWeekKD 計算個股 所有週KD 個股:{i} Start!");
@@ -269,7 +316,6 @@ namespace BX_Stock.Service
         //    using var transaction = RelationalDatabaseFacadeExtensions.BeginTransaction(context.Database, System.Data.IsolationLevel.ReadUncommitted);
         //    try
         //    {
-
         //        foreach (int i in context.Set<Stock>().Where(w => w.IsEnabled).Select(s => s.StockNo).ToList())
         //        {
         //            Logger.LogInformation($"CalcCurrentWeekKD 計算個股 該週KD 個股:{i} Start!");
@@ -304,13 +350,13 @@ namespace BX_Stock.Service
             List<int> insertTwseStockNo = insertStockList.Where(w => w.IsListed == true).Select(s => s.StockNo).ToList();
 
             if (insertTwseStockNo.Count > 0)
-                this.Logger.LogInformation($"InsertStock 新增個股資料 新上市個股: {insertTwseStockNo.Select(s => s.ToString()).Aggregate((current, total) => current + "," + total)} .");
+                this._logger.LogInformation($"InsertStock 新增個股資料 新上市個股: {insertTwseStockNo.Select(s => s.ToString()).Aggregate((current, total) => current + "," + total)} .");
 
             // 上櫃個股代號
             List<int> insertTpexStockNo = insertStockList.Where(w => w.IsListed == false).Select(s => s.StockNo).ToList();
 
             if (insertTpexStockNo.Count > 0)
-                this.Logger.LogInformation($"InsertStock 新增個股資料 新上櫃個股: {insertTpexStockNo.Select(s => s.ToString()).Aggregate((current, total) => current + "," + total)} .");
+                this._logger.LogInformation($"InsertStock 新增個股資料 新上櫃個股: {insertTpexStockNo.Select(s => s.ToString()).Aggregate((current, total) => current + "," + total)} .");
 
             //// 撈上市個股歷史資料
             //insertTwseStockNo.ForEach(x => this.TwseAPIService.ProcessStockHistoryData(x));

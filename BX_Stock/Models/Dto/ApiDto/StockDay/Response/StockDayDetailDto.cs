@@ -18,13 +18,13 @@ namespace BX_Stock.Models.Dto
         /// 成交股數
         /// </summary>
         [Display(Name = "成交股數")]
-        public int TradeVolume { get; set; }
+        public long TradeVolume { get; set; }
 
         /// <summary>
         /// 成交金額
         /// </summary>
         [Display(Name = "成交金額")]
-        public double TradeValue { get; set; }
+        public long TradeValue { get; set; }
 
         /// <summary>
         /// 開盤價

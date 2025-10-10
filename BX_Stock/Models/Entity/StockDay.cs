@@ -8,6 +8,7 @@ namespace BX_Stock.Models.Entity
     {
         public int StockNo { get; set; }
         public DateTime Date { get; set; }
+        public long TradeVolume { get; set; }
         public long TradeValue { get; set; }
         public decimal OpeningPrice { get; set; }
         public decimal HighestPrice { get; set; }
@@ -15,12 +16,13 @@ namespace BX_Stock.Models.Entity
         public decimal ClosingPrice { get; set; }
         public decimal Change { get; set; }
         public int Transaction { get; set; }
-        public decimal K { get; set; }
-        public decimal D { get; set; }
-        public decimal Ema12 { get; set; }
-        public decimal Ema26 { get; set; }
-        public decimal Dif { get; set; }
-        public decimal Dea { get; set; }
-        public decimal Osc { get; set; }
+        public DateTime CreateDate { get; set; }
+        //public decimal K { get; set; }
+        //public decimal D { get; set; }
+        //public decimal Ema12 { get; set; }
+        //public decimal Ema26 { get; set; }
+        //public decimal Dif { get; set; }
+        //public decimal Dea { get; set; }
+        //public decimal Osc { get; set; }
     }
 }
