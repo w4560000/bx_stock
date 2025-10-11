@@ -15,7 +15,7 @@ namespace BX_Stock.Service
         decimal LowestPrice { get; set; }
         decimal ClosingPrice { get; set; }
         decimal Change { get; set; }
-        int Transaction { get; set; }
+        long Transaction { get; set; }
         //decimal K { get; set; }
         //decimal D { get; set; }
         //decimal Ema12 { get; set; }

@@ -17,10 +17,10 @@ namespace BX_Stock.Service
         /// <returns>股票代號清單</returns>
         Task ProcessNewStock_Schedule1(DateTime date);
 
-        ///// <summary>
-        ///// 每日排程 新增當日個股 (Schedule2)
-        ///// </summary>
-        //Task ProcessTodayStock_Schedule2(DateTime date);
+        /// <summary>
+        /// 每日排程 新增當日個股 (Schedule2)
+        /// </summary>
+        Task ProcessTodayStock_Schedule2();
 
         /// <summary>
         /// 處理個股歷史資料 (初始化)

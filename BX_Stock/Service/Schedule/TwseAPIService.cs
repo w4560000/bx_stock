@@ -2,8 +2,6 @@
 using BX_Stock.Helper;
 using BX_Stock.Models.Dto;
 using BX_Stock.Models.Entity;
-using BX_Stock.Repository;
-using EFCore.BulkExtensions;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -127,6 +125,31 @@ namespace BX_Stock.Service
         }
 
         /// <summary>
+        /// 取得上市個股最新日資料
+        /// </summary>
+        public async Task<List<StockDay>> GetStockNewDayData(List<int> currentDbStockNo)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            this._logger.LogInformation($"GetStockNewDayData 上市個股最新日資料, 耗時:{sw.ElapsedMilliseconds}ms");
+
+            (List<StockDay> stockDayList, bool hasGetData) = await this.GetStockNewDayDataAsync(currentDbStockNo);
+
+            if (!hasGetData)
+                return new List<StockDay>();
+
+            this._logger.LogInformation($"GetStockNewDayData 上市個股最新日資料, 耗時:{sw.ElapsedMilliseconds}ms 結束");
+
+            var dateNow = DateTime.Now;
+
+            stockDayList.ForEach(f =>
+            {
+                f.CreateDate = dateNow;
+            });
+
+            return stockDayList;
+        }
+
+        /// <summary>
         /// 取得個股單月資訊
         /// </summary>
         /// <returns>個股單月資訊</returns>
@@ -150,11 +173,11 @@ namespace BX_Stock.Service
                     stockData = await this._baseApiService
                         .GetAsync<TwseStockDayResponseDto, TwseStockDayRequestParamDto>(StockApiUrl.TwseStockDay, requestParam);
 
-                    _logger.LogInformation($"GetStockDataAsync: 股號:{stockNo}, 查詢date:{date:yyyyMMdd}.");
+                    _logger.LogInformation($"GetStockDataAsync, 個股:{stockNo}, 查詢date:{date:yyyyMMdd}.");
 
                     if (stockData == null)
                     {
-                        _logger.LogError($"新增上市個股失敗: 股號:{stockNo}, 查詢date:{date:yyyyMMdd}, stockData = null");
+                        _logger.LogError($"GetStockDataAsync 失敗, 個股:{stockNo}, 查詢date:{date:yyyyMMdd}, stockData = null");
                         continue;
                     }
 
@@ -167,13 +190,13 @@ namespace BX_Stock.Service
                             break;
 
                         case "很抱歉，沒有符合條件的資料!":
-                            _logger.LogError($"新增上市個股失敗: 股號:{stockNo}, 查詢date:{date:yyyyMMdd}, {stockData.Stat}");
+                            _logger.LogError($"GetStockDataAsync 失敗 {stockData.Stat}, 個股:{stockNo}, 查詢date:{date:yyyyMMdd}");
                             return (null, false);
 
                         case "查詢日期小於99年1月4日，請重新查詢!":
                         case "查詢日期大於今日，請重新查詢!":
 
-                            _logger.LogError($"新增上市個股失敗: 股號:{stockNo}, 查詢date:{date:yyyyMMdd}, {stockData.Stat} 已重試");
+                            _logger.LogError($"GetStockDataAsync 失敗 {stockData.Stat}, 個股:{stockNo}, 查詢date:{date:yyyyMMdd} 已重試");
                             break;
 
                         default:
@@ -183,7 +206,115 @@ namespace BX_Stock.Service
             }
             catch (Exception ex)
             {
-                this._logger.LogError($"新增上市個股 發生錯誤: 股號:{stockNo}, date:{date:yyyyMMdd}, error: {ex}.");
+                this._logger.LogError($"GetStockDataAsync 發生錯誤, 個股:{stockNo}, date:{date:yyyyMMdd}, error: {ex}.");
+                throw ex;
+            }
+        }
+
+        /// <summary>
+        /// 取得個股最新日資料
+        /// </summary>
+        private async Task<(List<StockDay>, bool)> GetStockNewDayDataAsync(List<int> currentDbStockNo)
+        {
+            List<StockDay> result = null;
+            var stockData = new List<TwseStockDayAllResponseDto>();
+            try
+            {
+                var dbStockNo = currentDbStockNo.Select(s => s.ToString()).ToList();
+                stockData = await this._baseApiService
+                        .GetAsync<List<TwseStockDayAllResponseDto>, TwseStockDayRequestParamDto>(StockApiUrl.TwseStockNewDay, new TwseStockDayRequestParamDto());
+
+                _logger.LogInformation($"GetStockNewDayDataAsync Start");
+
+                if (stockData == null || !stockData.Any())
+                {
+                    _logger.LogError($"GetStockNewDayDataAsync 失敗, stockData 查無資料");
+                    return (null, false);
+                }
+
+                stockData = stockData.Where(w => dbStockNo.Contains(w.Code)).ToList();
+                stockData = stockData.Where(w => !string.IsNullOrWhiteSpace(w.Code)).ToList();
+
+                #region 檢查欄位 移除異常資料
+
+                var removeStockNoList = new List<string>();
+                foreach (var item in stockData)
+                {
+                    if (string.IsNullOrWhiteSpace(item.Date))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} Date異常");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.TradeVolume) || !long.TryParse(item.TradeVolume, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} TradeVolume 異常 {item.TradeVolume}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.TradeValue) || !long.TryParse(item.TradeValue, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} TradeValue 異常 {item.TradeValue}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.OpeningPrice) || !decimal.TryParse(item.OpeningPrice, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} OpeningPrice 異常 {item.OpeningPrice}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.HighestPrice) || !decimal.TryParse(item.HighestPrice, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} HighestPrice 異常 {item.HighestPrice}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.LowestPrice) || !decimal.TryParse(item.LowestPrice, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} LowestPrice 異常 {item.LowestPrice}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.ClosingPrice) || !decimal.TryParse(item.ClosingPrice, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} ClosingPrice 異常 {item.ClosingPrice}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.Change) || !decimal.TryParse(item.Change, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} Change 異常 {item.Change}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(item.Transaction) || !long.TryParse(item.Transaction, out _))
+                    {
+                        this._logger.LogError($"GetStockNewDayDataAsync 個股資料異常, 個股: {item.Code} Transaction 異常 {item.Transaction}");
+                        removeStockNoList.Add(item.Code);
+                        continue;
+                    }
+                }
+
+                stockData = stockData.Where(w => !removeStockNoList.Contains(w.Code)).ToList();
+
+                #endregion 檢查欄位 移除異常資料
+
+                result = this._mapper.Map<List<StockDay>>(stockData);
+
+                return (result, true);
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError($"GetStockNewDayDataAsync 發生錯誤, error: {ex}.");
                 throw ex;
             }
         }

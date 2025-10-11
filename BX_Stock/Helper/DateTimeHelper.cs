@@ -44,16 +44,26 @@ namespace BX_Stock.Helper
         }
 
         /// <summary>
-        /// DateTime轉換 民國轉西元
+        /// DateTime轉換 民國轉西元 (114/09/01 => 2025/09/01)
         /// </summary>
-        /// <param name="dateTimeOfTaiwanType"></param>
-        /// <returns></returns>
         public static string ConvertToADType(this string dateTimeOfTaiwanType)
         {
             string[] date = dateTimeOfTaiwanType.Split('/');
             date[0] = (Convert.ToInt32(date.FirstOrDefault()) + 1911).ToString();
 
             return string.Join('/', date);
+        }
+
+        /// <summary>
+        /// DateTime轉換 民國轉西元 (1140901 => DateTime)
+        /// </summary>
+        public static DateTime ConvertToADType2(this string dateTimeOfTaiwanType)
+        {
+            var year = dateTimeOfTaiwanType[..3];
+            var month = dateTimeOfTaiwanType.Substring(3, 2);
+            var day = dateTimeOfTaiwanType[5..];
+
+            return DateTime.Parse($"{int.Parse(year) + 1911}/{month}/{day}");
         }
 
         /// <summary>

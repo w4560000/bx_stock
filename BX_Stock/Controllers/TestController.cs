@@ -26,6 +26,10 @@ namespace BX_Stock.Controllers
             this.TpexAPIService = tpexAPIService;
         }
 
+        /// <summary>
+        /// 更新上市櫃個股
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         public async Task<string> ProcessNewStock_Schedule1()
         {
@@ -68,6 +72,27 @@ namespace BX_Stock.Controllers
             //bool a = this.StockContext.Set<Stock>().Where(w => w.StockNo == 1101).Select(s => s.IsEnabled).FirstOrDefault();
         }
 
+        /// <summary>
+        /// 每日排程 新增當日個股 (Schedule2)
+        /// </summary>
+        [HttpPost]
+        public async Task<string> ProcessTodayStock_Schedule2()
+        {
+            try
+            {
+                await StockService.ProcessTodayStock_Schedule2();
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
+        }
+
+        /// <summary>
+        /// 初始化個股資料
+        /// </summary>
+        /// <returns></returns>
         [HttpPost]
         public async Task<string> ProcessStockHistoryData()
         {
@@ -82,6 +107,10 @@ namespace BX_Stock.Controllers
             return "OK";
         }
 
+        /// <summary>
+        /// 重撈個股日資料
+        /// </summary>
+        /// <param name="date">日期</param>
         [HttpPost]
         public async Task<string> ProcessStockDay(DateTime date)
         {

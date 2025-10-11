@@ -48,6 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Models\Dto\ApiDto\StockDayAll\Request\" />
     <Folder Include="Models\Entity\" />
     <Folder Include="logData\" />
   </ItemGroup>

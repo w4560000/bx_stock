@@ -27,5 +27,11 @@ namespace BX_Stock.Service
         /// <param name="stockNo"要新增的個股></param>
         /// <param name="date">查詢起始時間</param>
         Task<StockDay> GetStockDayData(int stockNo, DateTime date);
+
+
+        /// <summary>
+        /// 取得上市個股最新日資料
+        /// </summary>
+        Task<List<StockDay>> GetStockNewDayData(List<int> 目標個股清單);
     }
 }

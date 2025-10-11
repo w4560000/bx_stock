@@ -15,7 +15,7 @@ namespace BX_Stock.Models.Entity
         public decimal LowestPrice { get; set; }
         public decimal ClosingPrice { get; set; }
         public decimal Change { get; set; }
-        public int Transaction { get; set; }
+        public long Transaction { get; set; }
         public DateTime CreateDate { get; set; }
         //public decimal K { get; set; }
         //public decimal D { get; set; }

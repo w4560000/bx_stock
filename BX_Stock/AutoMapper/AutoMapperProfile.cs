@@ -4,6 +4,7 @@ using BX_Stock.Helper;
 using BX_Stock.Models.Dto;
 using BX_Stock.Models.Entity;
 using System;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace BX_Stock.AutoMapper
@@ -27,6 +28,21 @@ namespace BX_Stock.AutoMapper
                 .ForAllOtherMembers(i => i.Ignore());
 
             this.CreateMap<StockDayDetailDto, StockDay>();
+
+
+            // twse個股最新日資訊 轉換成StockDay
+            this.CreateMap<TwseStockDayAllResponseDto, StockDay>()
+                .ForMember(dest => dest.Date, opts => opts.MapFrom(src => src.Date.ConvertToADType2()))
+                .ForMember(dest => dest.StockNo, opts => opts.MapFrom(src => int.Parse(src.Code)))
+                .ForMember(dest => dest.TradeVolume, opts => opts.MapFrom(src => long.Parse(src.TradeVolume)))
+                .ForMember(dest => dest.TradeValue, opts => opts.MapFrom(src => long.Parse(src.TradeValue)))
+                .ForMember(dest => dest.OpeningPrice, opts => opts.MapFrom(src => decimal.Parse(src.OpeningPrice)))
+                .ForMember(dest => dest.HighestPrice, opts => opts.MapFrom(src => decimal.Parse(src.HighestPrice)))
+                .ForMember(dest => dest.LowestPrice, opts => opts.MapFrom(src => decimal.Parse(src.LowestPrice)))
+                .ForMember(dest => dest.ClosingPrice, opts => opts.MapFrom(src => decimal.Parse(src.ClosingPrice)))
+                .ForMember(dest => dest.Change, opts => opts.MapFrom(src => decimal.Parse(src.Change)))
+                .ForMember(dest => dest.Transaction, opts => opts.MapFrom(src => long.Parse(src.Transaction)))
+                .ForAllOtherMembers(i => i.Ignore());
         }
 
         /// <summary>
