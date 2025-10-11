@@ -10,27 +10,32 @@ namespace BX_Stock.Service
     public interface IStockService
     {
         /// <summary>
-        /// 每日排程 撈取現有股號 (Schedule1)
+        /// 每日排程 撈取現有股號
         /// 若撈取的資料與現有資料庫股號有差異
         /// 則移除下架的個股與相關資訊，並新增上架的個股與相關資訊
         /// </summary>
         /// <returns>股票代號清單</returns>
-        Task ProcessNewStock_Schedule1(DateTime date);
+        Task 每日排程更新個股股號(DateTime date);
 
         /// <summary>
-        /// 每日排程 新增當日個股 (Schedule2)
+        /// 每日排程 撈最新上市個股資訊
         /// </summary>
-        Task ProcessTodayStock_Schedule2();
+        Task 每日排程撈最新上市個股資訊();
 
         /// <summary>
-        /// 處理個股歷史資料 (初始化)
+        /// 重撈上市個股歷史資訊 (初始化)
         /// </summary>
-        Task ProcessStockHistoryData();
+        Task 重撈上市個股歷史資訊();
 
         /// <summary>
-        /// 重撈個股日資料 (補資料用)
+        /// 重撈上市個股日資訊 (補資料用)
         /// </summary>
-        Task ProcessStockDay(DateTime date);
+        Task 重撈上市個股日資訊(DateTime date);
+
+        /// <summary>
+        /// 每日排程 撈最新上櫃個股資訊
+        /// </summary>
+        Task 每日排程撈最新上櫃個股資訊();
 
         ///// <summary>
         ///// 週六 Job

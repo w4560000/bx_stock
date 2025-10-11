@@ -220,11 +220,14 @@ namespace BX_Stock.Service
             var stockData = new List<TwseStockDayAllResponseDto>();
             try
             {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"GetStockNewDayDataAsync Start, 耗時:{sw.ElapsedMilliseconds}ms");
+
                 var dbStockNo = currentDbStockNo.Select(s => s.ToString()).ToList();
                 stockData = await this._baseApiService
-                        .GetAsync<List<TwseStockDayAllResponseDto>, TwseStockDayRequestParamDto>(StockApiUrl.TwseStockNewDay, new TwseStockDayRequestParamDto());
+                        .GetAsync<List<TwseStockDayAllResponseDto>>(StockApiUrl.TwseStockNewDay);
 
-                _logger.LogInformation($"GetStockNewDayDataAsync Start");
+                _logger.LogInformation($"GetStockNewDayDataAsync 撈完API, 耗時:{sw.ElapsedMilliseconds}ms");
 
                 if (stockData == null || !stockData.Any())
                 {
@@ -309,6 +312,8 @@ namespace BX_Stock.Service
                 #endregion 檢查欄位 移除異常資料
 
                 result = this._mapper.Map<List<StockDay>>(stockData);
+
+                _logger.LogInformation($"GetStockNewDayDataAsync End, 耗時:{sw.ElapsedMilliseconds}ms");
 
                 return (result, true);
             }

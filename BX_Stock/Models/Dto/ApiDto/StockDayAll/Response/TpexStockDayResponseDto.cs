@@ -4,9 +4,9 @@ using System.Collections.Generic;
 namespace BX_Stock.Models.Dto
 {
     /// <summary>
-    /// 上市個股回傳查詢資訊Dto
+    /// 上櫃個股回傳查詢資訊Dto
     /// </summary>
-    public class TwseStockDayAllResponseDto
+    public class TpexStockDayAllResponseDto
     {
         /// <summary>
         /// 日期 (ex 1141009)
@@ -16,51 +16,51 @@ namespace BX_Stock.Models.Dto
         /// <summary>
         /// 個股代號
         /// </summary>
-        public string Code { get; set; }
+        public string SecuritiesCompanyCode { get; set; }
 
         /// <summary>
         /// 個股名稱
         /// </summary>
-        public string Name { get; set; }
+        public string CompanyName { get; set; }
 
         /// <summary>
         /// 成交股數
         /// </summary>
-        public string TradeVolume { get; set; }
+        public string TradingShares { get; set; }
 
         /// <summary>
         /// 成交金額
         /// </summary>
-        public string TradeValue { get; set; }
+        public string TransactionAmount { get; set; }
 
         /// <summary>
         /// 開盤價
         /// </summary>
-        public string OpeningPrice { get; set; }
+        public string Open { get; set; }
 
         /// <summary>
         /// 最高價
         /// </summary>
-        public string HighestPrice { get; set; }
+        public string High { get; set; }
 
         /// <summary>
         /// 最低價
         /// </summary>
-        public string LowestPrice { get; set; }
+        public string Low { get; set; }
 
         /// <summary>
         /// 收盤價
         /// </summary>
-        public string ClosingPrice { get; set; }
+        public string Close { get; set; }
 
         /// <summary>
-        /// 漲跌價差
+        /// 漲跌價差 (ex: "+0.50")
         /// </summary>
         public string Change { get; set; }
 
         /// <summary>
         /// 成交筆數
         /// </summary>
-        public string Transaction { get; set; }
+        public string TransactionNumber { get; set; }
     }
 }

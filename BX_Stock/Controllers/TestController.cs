@@ -27,18 +27,16 @@ namespace BX_Stock.Controllers
         }
 
         /// <summary>
-        /// 更新上市櫃個股
+        /// 每日排程更新個股股號
         /// </summary>
-        /// <returns></returns>
         [HttpPost]
-        public async Task<string> ProcessNewStock_Schedule1()
+        public async Task<string> 每日排程更新個股股號()
         {
             try
             {
                 var date = DateTime.Now;
 
-                // 每日排程 更新個股
-                await StockService.ProcessNewStock_Schedule1(date);
+                await StockService.每日排程更新個股股號(date);
             }
             catch (Exception ex)
             {
@@ -73,14 +71,14 @@ namespace BX_Stock.Controllers
         }
 
         /// <summary>
-        /// 每日排程 新增當日個股 (Schedule2)
+        /// 每日排程撈最新上市個股資訊
         /// </summary>
         [HttpPost]
-        public async Task<string> ProcessTodayStock_Schedule2()
+        public async Task<string> 每日排程撈最新上市個股資訊()
         {
             try
             {
-                await StockService.ProcessTodayStock_Schedule2();
+                await StockService.每日排程撈最新上市個股資訊();
             }
             catch (Exception ex)
             {
@@ -90,15 +88,14 @@ namespace BX_Stock.Controllers
         }
 
         /// <summary>
-        /// 初始化個股資料
+        /// 每日排程撈最新上櫃個股資訊
         /// </summary>
-        /// <returns></returns>
         [HttpPost]
-        public async Task<string> ProcessStockHistoryData()
+        public async Task<string> 每日排程撈最新上櫃個股資訊()
         {
             try
             {
-                await StockService.ProcessStockHistoryData();
+                await StockService.每日排程撈最新上櫃個股資訊();
             }
             catch (Exception ex)
             {
@@ -108,15 +105,32 @@ namespace BX_Stock.Controllers
         }
 
         /// <summary>
-        /// 重撈個股日資料
+        /// 重撈上市個股歷史資訊
+        /// </summary>
+        [HttpPost]
+        public async Task<string> 重撈上市個股歷史資訊()
+        {
+            try
+            {
+                await StockService.重撈上市個股歷史資訊();
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
+        }
+
+        /// <summary>
+        /// 重撈上市個股日資訊
         /// </summary>
         /// <param name="date">日期</param>
         [HttpPost]
-        public async Task<string> ProcessStockDay(DateTime date)
+        public async Task<string> 重撈上市個股日資訊(DateTime date)
         {
             try
             {
-                await StockService.ProcessStockDay(date);
+                await StockService.重撈上市個股日資訊(date);
             }
             catch (Exception ex)
             {

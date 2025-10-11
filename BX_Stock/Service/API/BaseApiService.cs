@@ -52,20 +52,18 @@ namespace BX_Stock.Service
         /// <param name="url">url</param>
         /// <param name="headers">header</param>
         /// <returns>回傳物件</returns>
-        public T Get<T>(string url, Dictionary<string, string> headers = null)
+        public async Task<T> GetAsync<T>(string url, Dictionary<string, string> headers = null)
         {
             string json = string.Empty;
             using (HttpClient client = new HttpClient())
             {
                 this.AddHeader(headers, client);
 
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
                 // 發出 post 並取得結果
                 HttpResponseMessage response = client.GetAsync(url).Result;
 
                 // 將回應結果內容取出並轉為 string 再透過 linqpad 輸出
-                json = response.Content.ReadAsStringAsync().Result;
+                json = await response.Content.ReadAsStringAsync();
             }
 
             T result = json.ToTypedObject<T>();

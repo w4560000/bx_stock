@@ -13,12 +13,18 @@
         /// <summary>
         /// 取得上市個股最新日資料
         /// </summary>
-        public static string TwseStockNewDay = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL";
+        public static string TwseStockNewDay = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL?response=json";
 
         /// <summary>
         /// 取得上櫃個股歷史資料
         /// </summary>
         public static string TpexStockDay = "https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_info/st43_result.php";
+
+        /// <summary>
+        /// 取得上櫃個股最新日資料
+        /// </summary>
+        public static string TpexStockNewDay = "https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes?response=json";
+
 
         /// <summary>
         /// 取得現有上市股票代號

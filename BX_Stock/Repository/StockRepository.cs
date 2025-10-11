@@ -63,7 +63,7 @@ namespace BX_Stock.Repository
                 };
                 var dbResult = await _dbConnection.ExecuteAsync("SP_InsertUpt_Stock", param, commandType: CommandType.StoredProcedure);
 
-                _logger.LogInformation($"InsertStock 執行結束, 新增筆數:{dbResult}");
+                _logger.LogInformation($"InsertStock 執行結束");
 
                 return dbResult;
             }
@@ -86,7 +86,7 @@ namespace BX_Stock.Repository
                 };
                 var dbResult = await _dbConnection.ExecuteAsync("SP_Insert_StockDay", param, commandType: CommandType.StoredProcedure);
 
-                _logger.LogInformation($"InsertStockDay 執行結束, 新增筆數:{dbResult}");
+                _logger.LogInformation($"InsertStockDay 執行結束");
 
                 return dbResult;
             }

@@ -22,7 +22,7 @@ namespace BX_Stock.Service
         /// <param name="url">url</param>
         /// <param name="headers">header</param>
         /// <returns>回傳物件</returns>
-        public T Get<T>(string url, Dictionary<string, string> headers = null);
+        Task<T> GetAsync<T>(string url, Dictionary<string, string> headers = null);
 
         /// <summary>
         /// get 方法

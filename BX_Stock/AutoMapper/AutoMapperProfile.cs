@@ -30,7 +30,7 @@ namespace BX_Stock.AutoMapper
             this.CreateMap<StockDayDetailDto, StockDay>();
 
 
-            // twse個股最新日資訊 轉換成StockDay
+            // twse上市個股最新日資訊 轉換成StockDay
             this.CreateMap<TwseStockDayAllResponseDto, StockDay>()
                 .ForMember(dest => dest.Date, opts => opts.MapFrom(src => src.Date.ConvertToADType2()))
                 .ForMember(dest => dest.StockNo, opts => opts.MapFrom(src => int.Parse(src.Code)))
@@ -42,6 +42,20 @@ namespace BX_Stock.AutoMapper
                 .ForMember(dest => dest.ClosingPrice, opts => opts.MapFrom(src => decimal.Parse(src.ClosingPrice)))
                 .ForMember(dest => dest.Change, opts => opts.MapFrom(src => decimal.Parse(src.Change)))
                 .ForMember(dest => dest.Transaction, opts => opts.MapFrom(src => long.Parse(src.Transaction)))
+                .ForAllOtherMembers(i => i.Ignore());
+
+            // tpex上櫃個股最新日資訊 轉換成StockDay
+            this.CreateMap<TpexStockDayAllResponseDto, StockDay>()
+                .ForMember(dest => dest.Date, opts => opts.MapFrom(src => src.Date.ConvertToADType2()))
+                .ForMember(dest => dest.StockNo, opts => opts.MapFrom(src => int.Parse(src.SecuritiesCompanyCode)))
+                .ForMember(dest => dest.TradeVolume, opts => opts.MapFrom(src => long.Parse(src.TradingShares)))
+                .ForMember(dest => dest.TradeValue, opts => opts.MapFrom(src => long.Parse(src.TransactionAmount)))
+                .ForMember(dest => dest.OpeningPrice, opts => opts.MapFrom(src => decimal.Parse(src.Open)))
+                .ForMember(dest => dest.HighestPrice, opts => opts.MapFrom(src => decimal.Parse(src.High)))
+                .ForMember(dest => dest.LowestPrice, opts => opts.MapFrom(src => decimal.Parse(src.Low)))
+                .ForMember(dest => dest.ClosingPrice, opts => opts.MapFrom(src => decimal.Parse(src.Close)))
+                .ForMember(dest => dest.Change, opts => opts.MapFrom(src => decimal.Parse(src.Change)))
+                .ForMember(dest => dest.Transaction, opts => opts.MapFrom(src => long.Parse(src.TransactionNumber)))
                 .ForAllOtherMembers(i => i.Ignore());
         }
 
