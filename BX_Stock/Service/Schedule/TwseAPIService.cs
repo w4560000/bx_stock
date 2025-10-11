@@ -70,18 +70,19 @@ namespace BX_Stock.Service
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
-        public async Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2025-06")
+        public async Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2025-06", string endMonth = "2025-09")
         {
             Stopwatch sw = Stopwatch.StartNew();
-            _logger.LogInformation($"GetStockHistoryData Start, 個股: {stockNo}, 查詢月份: {startMonth}, 耗時:{sw.ElapsedMilliseconds}ms");
+            _logger.LogInformation($"GetStockHistoryData Start, 個股: {stockNo}, 查詢月份: {startMonth}~{endMonth}, 耗時:{sw.ElapsedMilliseconds}ms");
 
             DateTime twseDataStartMonth = DateTime.Parse(startMonth);
+            DateTime twseDataEndMonth = DateTime.Parse(endMonth);
             var stockDayList = new List<StockDay>();
 
-            var monthList = twseDataStartMonth.EachMonthTo(DateTime.Now);
+            var monthList = twseDataStartMonth.EachMonthTo(twseDataEndMonth);
             foreach (DateTime date in monthList)
             {
-                (StockDayDto stockDayDto, bool hasGetData) = await this.GetStockDataAsync(stockNo, date);
+                (StockDayDto<TwseStockDayDetailDto> stockDayDto, bool hasGetData) = await this.GetStockDataAsync(stockNo, date);
                 this._logger.LogInformation($"GetStockHistoryData 個股: {stockNo}, 查詢月份: {date:yyyy-MM}, 耗時:{sw.ElapsedMilliseconds}ms");
 
                 if (!hasGetData)
@@ -109,13 +110,13 @@ namespace BX_Stock.Service
         /// 取得上市個股日資料
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
-        /// <param name="date">愈新增的日期</param>
+        /// <param name="date">欲新增的日期</param>
         public async Task<StockDay> GetStockDayData(int stockNo, DateTime date)
         {
             Stopwatch sw = Stopwatch.StartNew();
             this._logger.LogInformation($"GetStockDayData 個股日資料, 個股: {stockNo}, 日期: {date:yyyy-MM-dd}, 耗時:{sw.ElapsedMilliseconds}ms");
 
-            var stockDayData = await this.GetStockHistoryData(stockNo, date.ToString("yyyy-MM"));
+            var stockDayData = await this.GetStockHistoryData(stockNo, date.ToString("yyyy-MM"), date.ToString("yyyy-MM"));
 
             var todayStockDay = stockDayData.Where(w => w.Date.ToString("yyyyMMdd") == date.ToString("yyyyMMdd")).FirstOrDefault();
 
@@ -153,9 +154,9 @@ namespace BX_Stock.Service
         /// 取得個股單月資訊
         /// </summary>
         /// <returns>個股單月資訊</returns>
-        private async Task<(StockDayDto, bool)> GetStockDataAsync(int stockNo, DateTime date)
+        private async Task<(StockDayDto<TwseStockDayDetailDto>, bool)> GetStockDataAsync(int stockNo, DateTime date)
         {
-            StockDayDto result = null;
+            StockDayDto<TwseStockDayDetailDto> result = null;
             TwseStockDayResponseDto stockData = new TwseStockDayResponseDto();
             try
             {
@@ -181,10 +182,10 @@ namespace BX_Stock.Service
                         continue;
                     }
 
-                    switch (stockData.Stat)
+                    switch (stockData.Stat.ToLower())
                     {
-                        case "OK":
-                            result = this._mapper.Map<StockDayDto>(stockData);
+                        case "ok":
+                            result = this._mapper.Map<StockDayDto<TwseStockDayDetailDto>>(stockData);
                             if (result.Data.FirstOrDefault().Date.ToString("yyyyMM") == date.ToString("yyyyMM"))
                                 return (result, true);
                             break;

@@ -6,7 +6,7 @@ namespace BX_Stock.Models.Dto
     /// <summary>
     /// 個股回傳查詢資訊Dto
     /// </summary>
-    public class TwseStockDayResponseDto
+    public class TwseStockDayResponseDto : IStockDayDetailDto
     {
         /// <summary>
         /// 回傳狀態
@@ -37,5 +37,23 @@ namespace BX_Stock.Models.Dto
         /// 註記
         /// </summary>
         public List<string> Note { get; set; }
+    }
+
+    public interface IStockDayDetailDto
+    {
+        /// <summary>
+        /// 查詢日期
+        /// </summary>
+        public string Date { get; set; }
+
+        /// <summary>
+        /// 個股資訊
+        /// </summary>
+        public List<List<string>> Data { get; set; }
+
+        /// <summary>
+        /// 個股資訊欄位
+        /// </summary>
+        public List<string> Fields { get; set; }
     }
 }

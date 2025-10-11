@@ -188,29 +188,63 @@ namespace BX_Stock.Service
             try
             {
                 Stopwatch sw = Stopwatch.StartNew();
-                _logger.LogInformation($"ProcessStockHistoryData 重撈上市個股歷史資訊 Start, 耗時:{sw.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"重撈上市個股歷史資訊 Start, 耗時:{sw.ElapsedMilliseconds}ms");
 
-                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true });
+                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true, IsListed = true });
 
                 foreach (var stockNo in stockNoList)
                 {
                     Stopwatch sw1 = Stopwatch.StartNew();
 
-                    _logger.LogInformation($"ProcessStockHistoryData 重撈上市個股歷史資訊, 個股: {stockNo}, 耗時:{sw1.ElapsedMilliseconds}ms");
+                    _logger.LogInformation($"重撈上市個股歷史資訊, 個股: {stockNo}, 耗時:{sw1.ElapsedMilliseconds}ms");
 
                     var stockDayList = await this._twseAPIService.GetStockHistoryData(stockNo);
 
                     // 新增個股歷史日資料
                     await _stockRepository.InsertStockDay(stockDayList);
 
-                    _logger.LogInformation($"ProcessStockHistoryData 重撈上市個股歷史資訊, 個股: {stockNo} 撈完,  耗時:{sw1.ElapsedMilliseconds}ms");
+                    _logger.LogInformation($"重撈上市個股歷史資訊, 個股: {stockNo} 撈完,  耗時:{sw1.ElapsedMilliseconds}ms");
                 }
 
-                _logger.LogInformation($"ProcessStockHistoryData 重撈上市個股歷史資訊 End, 耗時:{sw.ElapsedMilliseconds}ms");
+                _logger.LogInformation($"重撈上市個股歷史資訊 End, 耗時:{sw.ElapsedMilliseconds}ms");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"ProcessStockHistoryData 重撈上市個股歷史資訊 發生錯誤, Error: {ex.Message}.");
+                _logger.LogError($"重撈上市個股歷史資訊 發生錯誤, Error: {ex.Message}.");
+            }
+        }
+
+        /// <summary>
+        /// 重撈上櫃個股歷史資訊 (初始化用)
+        /// </summary>
+        public async Task 重撈上櫃個股歷史資訊()
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"重撈上櫃個股歷史資訊 Start, 耗時:{sw.ElapsedMilliseconds}ms");
+
+                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true, IsListed = false });
+
+                foreach (var stockNo in stockNoList)
+                {
+                    Stopwatch sw1 = Stopwatch.StartNew();
+
+                    _logger.LogInformation($"重撈上櫃個股歷史資訊, 個股: {stockNo}, 耗時:{sw1.ElapsedMilliseconds}ms");
+
+                    var stockDayList = await this._tpexAPIService.GetStockHistoryData(stockNo);
+
+                    // 新增個股歷史日資料
+                    await _stockRepository.InsertStockDay(stockDayList);
+
+                    _logger.LogInformation($"重撈上櫃個股歷史資訊, 個股: {stockNo} 撈完,  耗時:{sw1.ElapsedMilliseconds}ms");
+                }
+
+                _logger.LogInformation($"重撈上櫃個股歷史資訊 End, 耗時:{sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"重撈上櫃個股歷史資訊 發生錯誤, Error: {ex.Message}.");
             }
         }
 
@@ -224,7 +258,7 @@ namespace BX_Stock.Service
                 Stopwatch sw = Stopwatch.StartNew();
                 _logger.LogInformation($"重撈上市個股日資訊 Start, 日期: {date:yyyy-MM-dd}, 耗時: {sw.ElapsedMilliseconds}ms");
 
-                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true });
+                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true, IsListed = true });
 
                 var stockDayList = new List<StockDay>();
 
@@ -253,11 +287,50 @@ namespace BX_Stock.Service
         }
 
         /// <summary>
+        /// 重撈上櫃個股日資訊 (補資料用)
+        /// </summary>
+        public async Task 重撈上櫃個股日資訊(DateTime date)
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"重撈上櫃個股日資訊 Start, 日期: {date:yyyy-MM-dd}, 耗時: {sw.ElapsedMilliseconds}ms");
+
+                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true, IsListed = false });
+
+                var stockDayList = new List<StockDay>();
+
+                foreach (var stockNo in stockNoList)
+                {
+                    Stopwatch sw1 = Stopwatch.StartNew();
+
+                    _logger.LogInformation($"重撈上櫃個股日資訊, 個股: {stockNo}, 日期: {date:yyyy-MM-dd}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    var stockDay = await this._tpexAPIService.GetStockDayData(stockNo, date);
+
+                    stockDayList.Add(stockDay);
+
+                    _logger.LogInformation($"重撈上櫃個股日資訊, 個股: {stockNo} 完成, 日期: {date:yyyy-MM-dd},  耗時: {sw1.ElapsedMilliseconds}ms");
+                }
+
+                // 新增個股歷史日資料
+                await _stockRepository.InsertStockDay(stockDayList);
+
+                _logger.LogInformation($"重撈上櫃個股日資訊 End, 日期: {date:yyyy-MM-dd}, 耗時: {sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"重撈上櫃個股日資訊 發生錯誤, Error: {ex.Message}.");
+            }
+        }
+
+        /// <summary>
         /// 取得現有股號清單
         /// </summary>
         private async Task<List<int>> GetStockNoList(QueryStockDto req) => (await _stockRepository.QueryStock(req))
                                                                                  .Select(s => s.StockNo)
                                                                                  .ToList();
+
         ///// <summary>
         ///// 週六 Job
         ///// 計算新個股 所有週KD

@@ -5,38 +5,51 @@ namespace BX_Stock.Models.Dto
     public class TpexStockDayResponseDto
     {
         /// <summary>
+        /// 回傳狀態
+        /// </summary>
+        public string Stat { get; set; }
+
+        /// <summary>
+        /// 查詢日期
+        /// </summary>
+        public string Date { get; set; }
+
+        /// <summary>
         /// 個股代號
         /// </summary>
-        public string StkNo { get; set; }
+        public string Code { get; set; }
 
         /// <summary>
         /// 個股名稱
         /// </summary>
-        public string StkName { get; set; }
-
-        /// <summary>
-        /// 無使用
-        /// </summary>
-        public bool ShowListPriceNote { get; set; }
-
-        /// <summary>
-        /// 無使用
-        /// </summary>
-        public bool ShowListPriceLink { get; set; }
-
-        /// <summary>
-        /// 查詢時間
-        /// </summary>
-        public string ReportDate { get; set; }
-
-        /// <summary>
-        /// 資料筆數
-        /// </summary>
-        public int ITotalRecords { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// 個股資訊
         /// </summary>
-        public List<List<string>> AaData { get; set; }
+        public List<TpexStockDayResponseDetailDto> Tables { get; set; }
+    }
+
+    public class TpexStockDayResponseDetailDto : IStockDayDetailDto
+    {
+        /// <summary>
+        /// 標題
+        /// </summary>
+        public string Title { get; set; }
+
+        /// <summary>
+        /// 查詢日期
+        /// </summary>
+        public string Date { get; set; }
+
+        /// <summary>
+        /// 個股資訊
+        /// </summary>
+        public List<List<string>> Data { get; set; }
+
+        /// <summary>
+        /// 個股資訊欄位
+        /// </summary>
+        public List<string> Fields { get; set; }
     }
 }

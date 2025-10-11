@@ -6,18 +6,18 @@
     public class TpexStockDayRequestParamDto
     {
         /// <summary>
-        /// 語系
+        /// 回傳格式
         /// </summary>
-        public string L { get; set; } = "zh-tw";
+        public string Response { get; set; } = "json";
 
         /// <summary>
-        /// 日期 (ex 108/11)
+        /// 日期 (ex 2025/12/01)
         /// </summary>
-        public string D { get; set; }
+        public string Date { get; set; }
 
         /// <summary>
         /// 個股代號
         /// </summary>
-        public string Stkno { set; get; }
+        public string Code { set; get; }
     }
 }

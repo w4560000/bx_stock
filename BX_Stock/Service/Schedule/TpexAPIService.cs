@@ -71,36 +71,62 @@ namespace BX_Stock.Service
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
         /// <param name="endMonth">查詢結束時間</param>
-        public void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01-04", string endMonth = "2021-06")
+        public async Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2025-06", string endMonth = "2025-09")
         {
-            // todo
-            //this.Logger.LogInformation($"新增上櫃個股 : {stockNo} start!");
-            //DateTime twseDataStartMonth = DateTime.Parse(startMonth);
-            //List<IStockEntity> result = new List<IStockEntity>();
+            Stopwatch sw = Stopwatch.StartNew();
+            _logger.LogInformation($"GetStockHistoryData Start, 個股: {stockNo}, 查詢月份: {startMonth}~{endMonth}, 耗時:{sw.ElapsedMilliseconds}ms");
 
-            //foreach (DateTime date in twseDataStartMonth.EachMonthTo(DateTime.Parse(endMonth)))
-            //{
-            //    //(StockDayDto stockDayDto, int recordCount) = RetryHelper.RetryIfThrown<Exception, (StockDayDto, int)>(() =>
-            //    //                                                    this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult(), 3, 3);
+            DateTime twseDataStartMonth = DateTime.Parse(startMonth);
+            DateTime twseDataEndMonth = DateTime.Parse(endMonth);
+            var monthList = twseDataStartMonth.EachMonthTo(twseDataEndMonth);
 
-            //    (StockDayDto stockDayDto, int recordCount) = this.GetStockDataAsync(stockNo, date).GetAwaiter().GetResult();
+            var stockDayList = new List<StockDay>();
 
-            //    if (recordCount < 1)
-            //    {
-            //        continue;
-            //    }
+            foreach (DateTime date in monthList)
+            {
+                (StockDayDto<TpexStockDayDetailDto> stockDayDto, bool hasGetData) = await this.GetStockDataAsync(stockNo, date);
 
-            //    result.AddRange(this.Mapper.Map<List<StockDay>>(stockDayDto.Data));
-            //}
+                if (!hasGetData)
+                    continue;
 
-            //result.ForEach(f => f.StockNo = stockNo);
+                stockDayList.AddRange(this._mapper.Map<List<StockDay>>(stockDayDto.Data));
+            }
 
-            //// 計算KD
-            //result.CalcAllKD();
+            var dateNow = DateTime.Now;
 
-            //this.StockContext.AddRange(result);
-            //this.StockContext.SaveChanges();
-            //this.Logger.LogInformation($"新增上櫃個股 : {stockNo} end!");
+            stockDayList.ForEach(f =>
+            {
+                f.StockNo = stockNo;
+                f.CreateDate = dateNow;
+
+                f.TradeVolume = f.TradeVolume * 1000; // 單位是張，*1000 轉成股 存入DB
+                f.TradeValue = f.TradeValue * 1000; // 單位是千元，*1000 存入DB
+            });
+
+            var 起始時間 = monthList.Min().ToString("yyyy-MM");
+            var 結束時間 = monthList.Max().ToString("yyyy-MM");
+            this._logger.LogInformation($"GetStockHistoryData 個股: {stockNo}, 總筆數: {stockDayList.Count}, 時間區間: {起始時間}~{結束時間}, 耗時:{sw.ElapsedMilliseconds}ms 結束");
+
+            return stockDayList;
+        }
+
+        /// <summary>
+        /// 取得上櫃個股日資料
+        /// </summary>
+        /// <param name="stockNo">要新增的個股</param>
+        /// <param name="date">欲新增的日期</param>
+        public async Task<StockDay> GetStockDayData(int stockNo, DateTime date)
+        {
+            Stopwatch sw = Stopwatch.StartNew();
+            this._logger.LogInformation($"GetStockDayData 個股日資料, 個股: {stockNo}, 日期: {date:yyyy-MM-dd}, 耗時:{sw.ElapsedMilliseconds}ms");
+
+            var stockDayData = await this.GetStockHistoryData(stockNo, date.ToString("yyyy-MM"), date.ToString("yyyy-MM"));
+
+            var todayStockDay = stockDayData.Where(w => w.Date.ToString("yyyyMMdd") == date.ToString("yyyyMMdd")).FirstOrDefault();
+
+            this._logger.LogInformation($"GetStockDayData 個股日資料, 個股: {stockNo}, 日期: {date:yyyy-MM-dd}, 耗時:{sw.ElapsedMilliseconds}ms 結束");
+
+            return todayStockDay;
         }
 
         /// <summary>
@@ -132,14 +158,16 @@ namespace BX_Stock.Service
         /// 取得個股單月資訊
         /// </summary>
         /// <returns>個股單月資訊</returns>
-        private async Task<(StockDayDto, int)> GetStockDataAsync(int stockNo, DateTime date)
+        private async Task<(StockDayDto<TpexStockDayDetailDto>, bool)> GetStockDataAsync(int stockNo, DateTime date)
         {
+            StockDayDto<TpexStockDayDetailDto> result = null;
+
             try
             {
-                TpexStockDayRequestParamDto test = new TpexStockDayRequestParamDto()
+                TpexStockDayRequestParamDto param = new TpexStockDayRequestParamDto()
                 {
-                    D = date.ConvertToTaiwanType(),  // "108/09",
-                    Stkno = stockNo.ToString()
+                    Date = date.ToString("yyyy/MM/dd"),
+                    Code = stockNo.ToString()
                 };
 
                 while (true)
@@ -148,47 +176,34 @@ namespace BX_Stock.Service
                     System.Threading.Thread.Sleep(2000);
 
                     TpexStockDayResponseDto stockData = await this._baseApiService
-                        .GetAsync<TpexStockDayResponseDto, TpexStockDayRequestParamDto>(StockApiUrl.TpexStockDay, test);
+                        .GetAsync<TpexStockDayResponseDto, TpexStockDayRequestParamDto>(StockApiUrl.TpexStockDay, param);
 
                     if (stockData == null)
                     {
-                        _logger.LogError($"新增上櫃個股失敗: 股號:{stockNo}, 查詢date:{date}, stockData = null");
+                        _logger.LogError($"GetStockDataAsync 失敗, 個股:{stockNo}, 查詢date:{date:yyyyMMdd}, stockData = null");
                         continue;
                     }
 
-                    StockDayDetailDto[] detailDto = new StockDayDetailDto[stockData.ITotalRecords];
-
-                    // mapping
-                    for (int i = 0; i < stockData.ITotalRecords; i++)
+                    switch (stockData.Stat.ToLower())
                     {
-                        detailDto[i] = new StockDayDetailDto
-                        {
-                            Date = DateTime.Parse(stockData.AaData[i][0].ConvertToADType().Substring(0, 10)),
-                            TradeVolume = Convert.ToInt32(stockData.AaData[i][1].Replace(",", string.Empty)),
-                            TradeValue = Convert.ToInt64(stockData.AaData[i][2].Replace(",", string.Empty)),
-                            OpeningPrice = Convert.ToDouble(stockData.AaData[i][3].CheckDoubleValue()),
-                            HighestPrice = Convert.ToDouble(stockData.AaData[i][4].CheckDoubleValue()),
-                            LowestPrice = Convert.ToDouble(stockData.AaData[i][5].CheckDoubleValue()),
-                            ClosingPrice = Convert.ToDouble(stockData.AaData[i][6].CheckDoubleValue()),
-                            Change = Convert.ToDouble(stockData.AaData[i][7].CheckDoubleValue()),
-                            Transaction = Convert.ToInt32(stockData.AaData[i][8].Replace(",", string.Empty))
-                        };
+                        case "ok":
+                            result = this._mapper.Map<StockDayDto<TpexStockDayDetailDto>>(stockData);
+                            if (result.Data.FirstOrDefault().Date.ToString("yyyyMM") == date.ToString("yyyyMM"))
+                                return (result, true);
+                            break;
+
+                        case "很抱歉，沒有符合條件的資料!":
+                            _logger.LogError($"GetStockDataAsync 失敗 {stockData.Stat}, 個股:{stockNo}, 查詢date:{date:yyyyMMdd}");
+                            return (null, false);
+
+                        default:
+                            throw new Exception(stockData.Stat);
                     }
-
-                    StockDayDto result = new StockDayDto()
-                    {
-                        IsOK = stockData.StkNo.Equals(stockNo),
-                        Date = stockData.ReportDate.ConvertToADType(),
-                        StockNo = stockData.StkNo,
-                        Data = detailDto
-                    };
-
-                    return (result, stockData.ITotalRecords);
                 }
             }
             catch (Exception ex)
             {
-                this._logger.LogError($"新增上櫃個股 發生錯誤: 股號:{stockNo}, date:{date}, error: {ex}.");
+                this._logger.LogError($"GetStockDataAsync 發生錯誤: 股號:{stockNo}, date:{date}, error: {ex}.");
                 throw ex;
             }
         }

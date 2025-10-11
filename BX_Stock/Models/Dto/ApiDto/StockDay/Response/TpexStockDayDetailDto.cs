@@ -4,9 +4,9 @@ using System.ComponentModel.DataAnnotations;
 namespace BX_Stock.Models.Dto
 {
     /// <summary>
-    /// 個股查詢詳細資訊Dto
+    /// 上市個股查詢詳細資訊Dto
     /// </summary>
-    public class StockDayDetailDto
+    public class TwseStockDayDetailDto
     {
         /// <summary>
         /// 日期

@@ -19,15 +19,15 @@ namespace BX_Stock.AutoMapper
         /// </summary>
         public AutoMapperProfile()
         {
-            // twse個股資訊 轉換成dto
-            this.CreateMap<TwseStockDayResponseDto, StockDayDto>()
+            // twse上市個股資訊 轉換成dto
+            this.CreateMap<TwseStockDayResponseDto, StockDayDto<TwseStockDayDetailDto>>()
                 .ForMember(dest => dest.Date, opts => opts.MapFrom(src => src.Date))
-                .ForMember(dest => dest.IsOK, opts => opts.MapFrom(src => src.Stat.Equals("OK")))
+                .ForMember(dest => dest.IsOK, opts => opts.MapFrom(src => src.Stat.ToLower().Equals("ok")))
                 .ForMember(dest => dest.StockNo, opts => opts.MapFrom(src => src.Title.Trim()))
-                .ForMember(dest => dest.Data, opts => opts.MapFrom(src => this.ConvertStockDayDetail(src)))
+                .ForMember(dest => dest.Data, opts => opts.MapFrom(src => this.ConvertStockDayDetail<TwseStockDayDetailDto>(src)))
                 .ForAllOtherMembers(i => i.Ignore());
 
-            this.CreateMap<StockDayDetailDto, StockDay>();
+            this.CreateMap<TwseStockDayDetailDto, StockDay>();
 
 
             // twse上市個股最新日資訊 轉換成StockDay
@@ -43,6 +43,16 @@ namespace BX_Stock.AutoMapper
                 .ForMember(dest => dest.Change, opts => opts.MapFrom(src => decimal.Parse(src.Change)))
                 .ForMember(dest => dest.Transaction, opts => opts.MapFrom(src => long.Parse(src.Transaction)))
                 .ForAllOtherMembers(i => i.Ignore());
+
+            // tpex上櫃個股資訊 轉換成dto
+            this.CreateMap<TpexStockDayResponseDto, StockDayDto<TpexStockDayDetailDto>>()
+                .ForMember(dest => dest.Date, opts => opts.MapFrom(src => src.Date))
+                .ForMember(dest => dest.IsOK, opts => opts.MapFrom(src => src.Stat.ToLower().Equals("ok")))
+                .ForMember(dest => dest.StockNo, opts => opts.MapFrom(src => src.Code))
+                .ForMember(dest => dest.Data, opts => opts.MapFrom(src => this.ConvertStockDayDetail<TpexStockDayDetailDto>(src.Tables[0])))
+                .ForAllOtherMembers(i => i.Ignore());
+
+            this.CreateMap<TpexStockDayDetailDto, StockDay>();
 
             // tpex上櫃個股最新日資訊 轉換成StockDay
             this.CreateMap<TpexStockDayAllResponseDto, StockDay>()
@@ -64,13 +74,13 @@ namespace BX_Stock.AutoMapper
         /// </summary>
         /// <param name="mapFrom">證交所回傳資料</param>
         /// <returns>個股Dto</returns>
-        private StockDayDetailDto[] ConvertStockDayDetail(TwseStockDayResponseDto mapFrom)
+        private T[] ConvertStockDayDetail<T>(IStockDayDetailDto mapFrom) where T : class, new()
         {
-            StockDayDetailDto[] result = new StockDayDetailDto[mapFrom.Data.Count];
+            T[] result = new T[mapFrom.Data.Count];
 
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = new StockDayDetailDto();
+                result[i] = new T();
 
                 for (int j = 0; j < mapFrom.Data[i].Count; j++)
                 {

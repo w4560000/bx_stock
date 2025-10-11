@@ -18,7 +18,7 @@
         /// <summary>
         /// 取得上櫃個股歷史資料
         /// </summary>
-        public static string TpexStockDay = "https://www.tpex.org.tw/web/stock/aftertrading/daily_trading_info/st43_result.php";
+        public static string TpexStockDay = "https://www.tpex.org.tw/www/zh-tw/afterTrading/tradingStock";
 
         /// <summary>
         /// 取得上櫃個股最新日資料

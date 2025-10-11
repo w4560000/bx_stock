@@ -1,5 +1,4 @@
-﻿using BX_Stock.Models.Entity;
-using BX_Stock.Service;
+﻿using BX_Stock.Service;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Threading.Tasks;
@@ -122,6 +121,23 @@ namespace BX_Stock.Controllers
         }
 
         /// <summary>
+        /// 重撈上櫃個股歷史資訊
+        /// </summary>
+        [HttpPost]
+        public async Task<string> 重撈上櫃個股歷史資訊()
+        {
+            try
+            {
+                await StockService.重撈上櫃個股歷史資訊();
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
+        }
+
+        /// <summary>
         /// 重撈上市個股日資訊
         /// </summary>
         /// <param name="date">日期</param>
@@ -131,6 +147,24 @@ namespace BX_Stock.Controllers
             try
             {
                 await StockService.重撈上市個股日資訊(date);
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
+        }
+
+        /// <summary>
+        /// 重撈上櫃個股日資訊
+        /// </summary>
+        /// <param name="date">日期</param>
+        [HttpPost]
+        public async Task<string> 重撈上櫃個股日資訊(DateTime date)
+        {
+            try
+            {
+                await StockService.重撈上櫃個股日資訊(date);
             }
             catch (Exception ex)
             {

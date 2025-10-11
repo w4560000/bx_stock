@@ -23,9 +23,19 @@ namespace BX_Stock.Service
         Task 每日排程撈最新上市個股資訊();
 
         /// <summary>
+        /// 每日排程 撈最新上櫃個股資訊
+        /// </summary>
+        Task 每日排程撈最新上櫃個股資訊();
+
+        /// <summary>
         /// 重撈上市個股歷史資訊 (初始化)
         /// </summary>
         Task 重撈上市個股歷史資訊();
+
+        /// <summary>
+        /// 重撈上櫃個股歷史資訊 (初始化)
+        /// </summary>
+        Task 重撈上櫃個股歷史資訊();
 
         /// <summary>
         /// 重撈上市個股日資訊 (補資料用)
@@ -33,9 +43,9 @@ namespace BX_Stock.Service
         Task 重撈上市個股日資訊(DateTime date);
 
         /// <summary>
-        /// 每日排程 撈最新上櫃個股資訊
+        /// 重撈上櫃個股日資訊 (補資料用)
         /// </summary>
-        Task 每日排程撈最新上櫃個股資訊();
+        Task 重撈上櫃個股日資訊(DateTime date);
 
         ///// <summary>
         ///// 週六 Job

@@ -2,7 +2,7 @@
 
 namespace BX_Stock.Models.Dto
 {
-    public class StockDayDto
+    public class StockDayDto<T>
     {
         /// <summary>
         /// 回傳狀態
@@ -22,6 +22,6 @@ namespace BX_Stock.Models.Dto
         /// <summary>
         /// 個股資訊
         /// </summary>
-        public StockDayDetailDto[] Data { get; set; }
+        public T[] Data { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using BX_Stock.Models.Entity;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -16,13 +17,18 @@ namespace BX_Stock.Service
         void ProcessStockScheduleFirst(int start, int end);
 
         /// <summary>
-        /// 新增上櫃個股歷史資料
+        /// 取得上櫃個股歷史資料
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
-        /// <param name="endMonth">查詢結束時間</param>
-        void ProcessStockHistoryData(int stockNo, string startMonth = "2010-01", string endMonth = "2019-10");
+        Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2025-06", string endMonth = "2025-09");
 
+        /// <summary>
+        /// 取得上市個股日資料
+        /// </summary>
+        /// <param name="stockNo"要新增的個股></param>
+        /// <param name="date">查詢起始時間</param>
+        Task<StockDay> GetStockDayData(int stockNo, DateTime date);
 
         /// <summary>
         /// 取得上櫃個股最新日資料
