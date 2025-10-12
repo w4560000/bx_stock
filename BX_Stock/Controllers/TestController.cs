@@ -172,5 +172,40 @@ namespace BX_Stock.Controllers
             }
             return "OK";
         }
+
+        /// <summary>
+        /// 計算移動平均線日資訊
+        /// </summary>
+        /// <param name="date">日期</param>
+        [HttpPost]
+        public async Task<string> 計算移動平均線日資訊(DateTime date)
+        {
+            try
+            {
+                await StockService.計算移動平均線日資訊(date);
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
+        }
+
+        /// <summary>
+        /// 計算移動平均線歷史指標
+        /// </summary>
+        [HttpPost]
+        public async Task<string> 計算移動平均線歷史指標()
+        {
+            try
+            {
+                await StockService.計算移動平均線歷史指標();
+            }
+            catch (Exception ex)
+            {
+                return ex.ToString();
+            }
+            return "OK";
+        }
     }
 }

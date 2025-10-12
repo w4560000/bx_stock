@@ -47,6 +47,16 @@ namespace BX_Stock.Service
         /// </summary>
         Task 重撈上櫃個股日資訊(DateTime date);
 
+        /// <summary>
+        /// 計算移動平均線歷史指標 (初始化)
+        /// </summary>
+        Task 計算移動平均線歷史指標();
+
+        /// <summary>
+        /// 計算移動平均線日資訊 (補資料用)
+        /// </summary>
+        Task 計算移動平均線日資訊(DateTime date);
+
         ///// <summary>
         ///// 週六 Job
         ///// 計算新個股 所有週KD

@@ -18,7 +18,7 @@ namespace BX_Stock.Service
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
-        Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2025-06", string endMonth = "2025-09");
+        Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2020-01", string endMonth = "2025-09");
 
 
         /// <summary>

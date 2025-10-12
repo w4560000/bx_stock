@@ -70,7 +70,7 @@ namespace BX_Stock.Service
         /// </summary>
         /// <param name="stockNo">要新增的個股</param>
         /// <param name="startMonth">查詢起始時間</param>
-        public async Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2025-06", string endMonth = "2025-09")
+        public async Task<List<StockDay>> GetStockHistoryData(int stockNo, string startMonth = "2020-01", string endMonth = "2025-09")
         {
             Stopwatch sw = Stopwatch.StartNew();
             _logger.LogInformation($"GetStockHistoryData Start, 個股: {stockNo}, 查詢月份: {startMonth}~{endMonth}, 耗時:{sw.ElapsedMilliseconds}ms");

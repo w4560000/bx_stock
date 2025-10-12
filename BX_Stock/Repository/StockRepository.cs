@@ -2,12 +2,14 @@
 using BX_Stock.Models.Dto.StockDto;
 using BX_Stock.Models.Entity;
 using BX_Stock.Service;
+using BX_Stock.Service.Interface;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BX_Stock.Repository
@@ -96,5 +98,30 @@ namespace BX_Stock.Repository
                 throw;
             }
         }
+
+        public async Task<int> InsertMovingAverage(List<MovingAverage> dataList)
+        {
+            try
+            {
+                _logger.LogInformation($"InsertMovingAverage 執行, 筆數:{dataList.Count}");
+
+                var param = new
+                {
+                    UDT_MovingAverage = dataList.ToDataTable().AsTableValuedParameter("UDT_MovingAverage")
+                };
+                var dbResult = await _dbConnection.ExecuteAsync("SP_Insert_MovingAverage", param, commandType: CommandType.StoredProcedure);
+
+                _logger.LogInformation($"InsertMovingAverage 執行結束");
+
+                return dbResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"InsertMovingAverage 查詢 發生錯誤, Error: {ex.Message}.");
+                throw;
+            }
+        }
+
+
     }
 }

@@ -1,15 +1,11 @@
-﻿using BX_Stock.Helper;
+﻿using BX_Stock.Helper.StockHelper;
 using BX_Stock.Models.Dto.StockDto;
 using BX_Stock.Models.Entity;
 using BX_Stock.Repository;
-using EFCore.BulkExtensions;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -321,6 +317,114 @@ namespace BX_Stock.Service
             catch (Exception ex)
             {
                 _logger.LogInformation($"重撈上櫃個股日資訊 發生錯誤, Error: {ex.Message}.");
+            }
+        }
+
+        /// <summary>
+        /// 計算移動平均線歷史指標 (初始化用)
+        /// </summary>
+        public async Task 計算移動平均線歷史指標()
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"計算移動平均線歷史指標 Start, 耗時: {sw.ElapsedMilliseconds}ms");
+
+                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true, IsListed = true });
+                var dateNow = DateTime.Now;
+
+                foreach (var stockNo in stockNoList)
+                {
+                    Stopwatch sw1 = Stopwatch.StartNew();
+
+                    _logger.LogInformation($"計算移動平均線歷史指標, 個股: {stockNo}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    var stockDayList = await this._stockRepository.GetStockDayData(stockNo, DateTime.Parse("2020-01-01"), DateTime.Parse("2025-09-30"));
+
+                    _logger.LogInformation($"計算移動平均線歷史指標, 個股: {stockNo}, 筆數:{stockDayList.Count}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    var movingAverageList = stockDayList.Select(s => new MovingAverage() { StockNo = s.StockNo, Date = s.Date, CreateDate = dateNow }).ToList();
+                    MovingAverageHelper.Calc(stockDayList, movingAverageList, 5);
+                    MovingAverageHelper.Calc(stockDayList, movingAverageList, 10);
+                    MovingAverageHelper.Calc(stockDayList, movingAverageList, 20);
+                    MovingAverageHelper.Calc(stockDayList, movingAverageList, 30);
+                    MovingAverageHelper.Calc(stockDayList, movingAverageList, 60);
+                    MovingAverageHelper.Calc(stockDayList, movingAverageList, 180);
+                    MovingAverageHelper.Calc(stockDayList, movingAverageList, 365);
+
+                    _logger.LogInformation($"計算移動平均線歷史指標, 個股: {stockNo} 計算完成,  耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    await _stockRepository.InsertMovingAverage(movingAverageList);
+
+                    _logger.LogInformation($"計算移動平均線歷史指標, 個股: {stockNo} 新增完成,  耗時: {sw1.ElapsedMilliseconds}ms");
+                }
+
+                _logger.LogInformation($"計算移動平均線歷史指標 End, 耗時: {sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"計算移動平均線歷史指標 發生錯誤, Error: {ex.Message}.");
+            }
+        }
+
+        /// <summary>
+        /// 計算移動平均線日資訊 (補資料用)
+        /// </summary>
+        public async Task 計算移動平均線日資訊(DateTime date)
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"計算移動平均線日資訊 Start, 日期: {date:yyyyMMdd}, 耗時: {sw.ElapsedMilliseconds}ms");
+
+                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true, IsListed = true });
+                var dateNow = DateTime.Now;
+
+                foreach (var stockNo in stockNoList)
+                {
+                    Stopwatch sw1 = Stopwatch.StartNew();
+
+                    _logger.LogInformation($"計算移動平均線日資訊, 個股: {stockNo}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    var stockDayList = await this._stockRepository.GetStockDayDataByDay(stockNo, 365);
+
+                    _logger.LogInformation($"計算移動平均線日資訊, 個股: {stockNo}, 筆數:{stockDayList.Count}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    if (!stockDayList.Any(a => a.Date == date))
+                    {
+                        _logger.LogInformation($"計算移動平均線日資訊, 個股: {stockNo}, 查無日期: {date:yyyyMMdd} 的資料 略過, 耗時: {sw1.ElapsedMilliseconds}ms");
+                        continue;
+                    }
+
+                    var movingAverage = new List<MovingAverage>()
+                    {
+                        new MovingAverage()
+                        {
+                            StockNo = stockNo,
+                            CreateDate = dateNow,
+                            Date = date,
+                        }
+                    };
+                    MovingAverageHelper.Calc(stockDayList, movingAverage, 5);
+                    MovingAverageHelper.Calc(stockDayList, movingAverage, 10);
+                    MovingAverageHelper.Calc(stockDayList, movingAverage, 20);
+                    MovingAverageHelper.Calc(stockDayList, movingAverage, 30);
+                    MovingAverageHelper.Calc(stockDayList, movingAverage, 60);
+                    MovingAverageHelper.Calc(stockDayList, movingAverage, 180);
+                    MovingAverageHelper.Calc(stockDayList, movingAverage, 365);
+
+                    _logger.LogInformation($"計算移動平均線日資訊, 個股: {stockNo} 計算完成,  耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    await _stockRepository.InsertMovingAverage(movingAverage);
+
+                    _logger.LogInformation($"計算移動平均線日資訊, 個股: {stockNo} 新增完成,  耗時: {sw1.ElapsedMilliseconds}ms");
+                }
+
+                _logger.LogInformation($"計算移動平均線日資訊 End, 耗時: {sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"計算移動平均線日資訊 發生錯誤, Error: {ex.Message}.");
             }
         }
 

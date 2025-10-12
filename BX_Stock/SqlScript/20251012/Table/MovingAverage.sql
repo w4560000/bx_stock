@@ -1,0 +1,28 @@
+﻿USE [Stock]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- [MovingAverage]
+CREATE TABLE [dbo].[MovingAverage](
+	[StockNo] [int] NOT NULL,
+	[Date] [datetime] NOT NULL,
+	[MA5] decimal(9,2) NOT NULL,
+	[MA10] decimal(9,2) NOT NULL,
+	[MA20] decimal(9,2) NOT NULL,
+	[MA30] decimal(9,2) NOT NULL,
+	[MA60] decimal(9,2) NOT NULL,
+	[MA180] decimal(9,2) NOT NULL,
+	[MA365] decimal(9,2) NOT NULL,
+	[CreateDate] [datetime] NOT NULL,
+ CONSTRAINT [PK_MovingAverage] PRIMARY KEY CLUSTERED 
+(
+	[StockNo] ASC,
+	[Date] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
