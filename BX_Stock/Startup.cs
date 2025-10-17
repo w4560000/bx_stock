@@ -1,11 +1,8 @@
-using BX_Stock.Models;
-using BX_Stock.Models.Entity;
 using BX_Stock.Repository;
 using BX_Stock.Service;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,7 +33,7 @@ namespace BX_Stock
                 new SqlConnection(sp.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection"))
             );
 
-            // µù¥UAutoMapper
+            // è¨»å†ŠAutoMapper
             services.SetAutoMapper();
 
             // DI
@@ -48,7 +45,7 @@ namespace BX_Stock
             services.AddScoped<ITpexAPIService, TpexAPIService>();
             services.AddScoped<IStockService, StockService>();
 
-            // µù¥UHangfire±Æµ{
+            // è¨»å†ŠHangfireæ’ç¨‹
             services.SettingHangfire(this.Configuration);
         }
 
@@ -57,11 +54,11 @@ namespace BX_Stock
         {
             app.UseStaticFiles();
 
-            // ³]©wHangfire±Æµ{¤èªk
+            // è¨­å®šHangfireæ’ç¨‹æ–¹æ³•
             app.UseHangfireServer(new BackgroundJobServerOptions { WorkerCount = 1 });
             HangfireSetting.SettingHangfire(serviceProvider);
 
-            // ³]©whangfire»öªíªO
+            // è¨­å®šhangfireå„€è¡¨æ¿
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
                 StatsPollingInterval = 10000,

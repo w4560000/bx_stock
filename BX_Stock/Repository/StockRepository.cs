@@ -1,8 +1,6 @@
 ﻿using BX_Stock.Helper;
 using BX_Stock.Models.Dto.StockDto;
 using BX_Stock.Models.Entity;
-using BX_Stock.Service;
-using BX_Stock.Service.Interface;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -122,6 +120,61 @@ namespace BX_Stock.Repository
             }
         }
 
+        /// <summary>
+        /// 取得最新股票日資料 by day
+        /// </summary>
+        public async Task<List<StockDay>> GetStockDayDataByDay(int stockNo, int day)
+        {
+            try
+            {
+                _logger.LogInformation($"GetStockDayDataByDay 執行, 股票: {stockNo}, 天數: {day}");
+
+                var sql = @"
+                    SELECT TOP (@Day) * FROM StockDay 
+                    WHERE StockNo = @StockNo
+                    ORDER BY Date DESC";
+
+                var result = await _dbConnection.QueryAsync<StockDay>(sql, new { StockNo = stockNo, Day = day });
+
+                _logger.LogInformation($"GetStockDayDataByDay 執行結束, 取得 {result.Count()} 筆資料");
+
+                return result.ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"GetStockDayDataByDay 發生錯誤, Error: {ex.Message}.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 取得股票日資料
+        /// </summary>
+        public async Task<List<StockDay>> GetStockDayData(int stockNo, DateTime startDate, DateTime endDate)
+        {
+            try
+            {
+                _logger.LogInformation($"GetStockDayData 執行, 股票: {stockNo}, 期間: {startDate:yyyy-MM-dd} ~ {endDate:yyyy-MM-dd}");
+
+                var sql = @"
+                    SELECT * FROM StockDay 
+                    WHERE StockNo = @StockNo 
+                    AND Date >= @StartDate 
+                    AND Date <= @EndDate 
+                    ORDER BY Date";
+
+                var result = await _dbConnection.QueryAsync<StockDay>(sql, new { StockNo = stockNo, StartDate = startDate, EndDate = endDate });
+
+                _logger.LogInformation($"GetStockDayData 執行結束, 取得 {result.Count()} 筆資料");
+
+                return result.ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"GetStockDayData 發生錯誤, Error: {ex.Message}.");
+                throw;
+            }
+        }
 
     }
 }
