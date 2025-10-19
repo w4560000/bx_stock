@@ -1,5 +1,8 @@
+using BX_Stock.Extension;
+using BX_Stock.Models;
 using BX_Stock.Repository;
 using BX_Stock.Service;
+using BX_Stock.Service.SDK;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -27,6 +30,10 @@ namespace BX_Stock
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            Configuration.Bind(ConfigHelper.AppSetting);
+            services.Configure<FobunSetting>(Configuration.GetSection(nameof(FobunSetting))); // todo check
+            services.Configure<AppSetting>(Configuration);
+
             services.AddControllersWithViews();
 
             services.AddTransient<IDbConnection>(sp =>
@@ -39,11 +46,16 @@ namespace BX_Stock
             // DI
             services.AddSingleton<ITaskProvider, TaskProvider>();
             services.AddSingleton<StockRepository>();
+            services.AddSingleton<Fobun>();
+
             services.AddScoped<IBaseApiService, BaseApiService>();
             services.AddScoped<IWebCrawlerService, WebCrawlerService>();
             services.AddScoped<ITwseAPIService, TwseAPIService>();
             services.AddScoped<ITpexAPIService, TpexAPIService>();
             services.AddScoped<IStockService, StockService>();
+
+            // 服務啟動
+            services.AddHostedService<FobunInitializer>();
 
             // 註冊Hangfire排程
             services.SettingHangfire(this.Configuration);
