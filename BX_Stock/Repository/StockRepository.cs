@@ -97,6 +97,30 @@ namespace BX_Stock.Repository
             }
         }
 
+        public async Task<int> InsertStockMinute(List<StockMinute> dataList)
+        {
+            try
+            {
+                _logger.LogInformation($"InsertStockMinute 執行, 筆數:{dataList.Count}");
+
+                var param = new
+                {
+                    UDT_StockMinute = dataList.ToDataTable().AsTableValuedParameter("UDT_StockMinute")
+                };
+                var dbResult = await _dbConnection.ExecuteAsync("SP_Insert_StockMinute", param, commandType: CommandType.StoredProcedure);
+
+                _logger.LogInformation($"InsertStockMinute 執行結束");
+
+                return dbResult;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"InsertStockMinute 查詢 發生錯誤, Error: {ex.Message}.");
+                throw;
+            }
+        }
+
+
         public async Task<int> InsertMovingAverage(List<MovingAverage> dataList)
         {
             try

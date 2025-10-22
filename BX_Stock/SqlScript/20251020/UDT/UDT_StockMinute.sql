@@ -1,14 +1,14 @@
 ﻿USE [Stock]
 GO
 
-IF  EXISTS (SELECT * FROM sys.types st JOIN sys.schemas ss ON st.schema_id = ss.schema_id WHERE st.name = N'UDT_StockDay' AND ss.name = N'dbo')
-DROP TYPE [dbo].[UDT_StockDay]
+IF  EXISTS (SELECT * FROM sys.types st JOIN sys.schemas ss ON st.schema_id = ss.schema_id WHERE st.name = N'UDT_StockMinute' AND ss.name = N'dbo')
+DROP TYPE [dbo].[UDT_StockMinute]
 GO
 
 USE [Stock]
 GO
 
-CREATE TYPE [dbo].[UDT_StockDay] AS TABLE(
+CREATE TYPE [dbo].[UDT_StockMinute] AS TABLE(
     [StockNo]		INT,
 	[Date]			DATETIME,
 	[TradeVolume]   BIGINT,
@@ -23,5 +23,5 @@ CREATE TYPE [dbo].[UDT_StockDay] AS TABLE(
 )
 GO
 
-GRANT EXECUTE ON TYPE::[dbo].[UDT_StockDay] TO [public] AS [dbo]
+GRANT EXECUTE ON TYPE::[dbo].[UDT_StockMinute] TO [public] AS [dbo]
 GO

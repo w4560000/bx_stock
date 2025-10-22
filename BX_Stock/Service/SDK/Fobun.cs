@@ -2,7 +2,10 @@
 using BX_Stock.Extension;
 using BX_Stock.Helper;
 using BX_Stock.Models;
+using BX_Stock.Models.Dto.ApiDto.Fobun.HistoricalCandles;
 using FubonNeo.Sdk;
+using FugleMarketData.QueryModels.Stock.History;
+using FugleMarketData.QueryModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -24,7 +27,6 @@ namespace BX_Stock.Service.SDK
 
         private readonly SemaphoreSlim _connectLock = new SemaphoreSlim(1, 1); // lock連線流程
         private readonly ManualResetEventSlim _canTrade = new ManualResetEventSlim(true); // true = 可以下單
-
 
         /// <summary>
         /// Log
@@ -73,7 +75,7 @@ namespace BX_Stock.Service.SDK
 
                 _logger.LogInformation($"FobunSDK {_serverName} | 成功連線");
 
-                var result = sdk.Login(setting.UserId, setting.UserPwd, setting.CAPath);
+                var result = sdk.Login(setting.UserId, setting.UserPwd, setting.CAPath, setting.CAPwd);
                 if (!result.isSuccess)
                     throw new Exception($"FobunSDK {_serverName} | 登入異常, {result.message}");
 
@@ -85,7 +87,7 @@ namespace BX_Stock.Service.SDK
                 _logger.LogInformation($"FobunSDK {_serverName} | 初始化成功");
 
                 // 連線完成，允許交易
-                _canTrade.Set(); 
+                _canTrade.Set();
             }
             catch (Exception ex)
             {
@@ -138,6 +140,28 @@ namespace BX_Stock.Service.SDK
             {
                 Console.WriteLine(code + filledData.ToString());
             };
+        }
+
+        public async Task<FobunHistoricalCandlesResponse> GetHistoricalCandlesAsync(int stockNo, HistoryCandlesRequest req)
+        {
+            try
+            {
+                var rest = sdk.MarketData.RestClient.Stock;
+
+                var candle = await rest.History.Candles(stockNo.ToString(), req);
+
+                var candle_con = await candle.Content.ReadAsStringAsync();
+
+                if (string.IsNullOrWhiteSpace(candle_con))
+                    throw new Exception("GetHistoricalCandlesAsync 回傳資料異常");
+
+                return JsonExtension.ToTypedObject<FobunHistoricalCandlesResponse>(candle_con);
+            }
+            catch (Exception e)
+            {
+                this._logger.LogInformation($"FobunSDK {_serverName} | GetHistoricalCandlesAsync 異常, Error: {e}");
+                return null;
+            }
         }
 
         // todo 下單

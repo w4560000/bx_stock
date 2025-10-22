@@ -52,7 +52,7 @@ namespace BX_Stock
             services.AddScoped<IWebCrawlerService, WebCrawlerService>();
             services.AddScoped<ITwseAPIService, TwseAPIService>();
             services.AddScoped<ITpexAPIService, TpexAPIService>();
-            services.AddScoped<IStockService, StockService>();
+            services.AddScoped<StockService>();
 
             // 服務啟動
             services.AddHostedService<FobunInitializer>();

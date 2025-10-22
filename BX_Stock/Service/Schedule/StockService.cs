@@ -2,6 +2,9 @@
 using BX_Stock.Models.Dto.StockDto;
 using BX_Stock.Models.Entity;
 using BX_Stock.Repository;
+using BX_Stock.Service.SDK;
+using FugleMarketData.QueryModels;
+using FugleMarketData.QueryModels.Stock.History;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -14,7 +17,7 @@ namespace BX_Stock.Service
     /// <summary>
     /// 股票Service
     /// </summary>
-    public class StockService : IStockService
+    public class StockService
     {
         /// <summary>
         /// 網路爬蟲 Service
@@ -42,22 +45,31 @@ namespace BX_Stock.Service
         private readonly StockRepository _stockRepository;
 
         /// <summary>
+        /// 富邦SDK
+        /// </summary>
+        private readonly Fobun _fobun;
+
+        /// <summary>
         /// 個股Service
         /// </summary>
         /// <param name="webCrawlerService">網路爬蟲Service</param>
         /// <param name="twseAPIService">證交所API Service</param>
         /// <param name="tpexAPIService">櫃買中心API Service</param>
+        /// <param name="stockRepository">股票儲存庫</param>
+        /// <param name="logger">Logger</param>
         public StockService(
             IWebCrawlerService webCrawlerService,
             ITwseAPIService twseAPIService,
             ITpexAPIService tpexAPIService,
             StockRepository stockRepository,
+            Fobun fobun,
             ILogger<StockService> logger)
         {
             this._webCrawlerService = webCrawlerService;
             this._twseAPIService = twseAPIService;
             this._tpexAPIService = tpexAPIService;
             this._stockRepository = stockRepository;
+            this._fobun = fobun;
             this._logger = logger;
         }
 
@@ -278,7 +290,7 @@ namespace BX_Stock.Service
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"重撈上市個股日資訊 發生錯誤, Error: {ex.Message}.");
+                _logger.LogError($"重撈上市個股日資訊 發生錯誤, Error: {ex.Message}.");
             }
         }
 
@@ -316,7 +328,7 @@ namespace BX_Stock.Service
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"重撈上櫃個股日資訊 發生錯誤, Error: {ex.Message}.");
+                _logger.LogError($"重撈上櫃個股日資訊 發生錯誤, Error: {ex.Message}.");
             }
         }
 
@@ -363,7 +375,7 @@ namespace BX_Stock.Service
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"計算移動平均線歷史指標 發生錯誤, Error: {ex.Message}.");
+                _logger.LogError($"計算移動平均線歷史指標 發生錯誤, Error: {ex.Message}.");
             }
         }
 
@@ -424,7 +436,69 @@ namespace BX_Stock.Service
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"計算移動平均線日資訊 發生錯誤, Error: {ex.Message}.");
+                _logger.LogError($"計算移動平均線日資訊 發生錯誤, Error: {ex.Message}.");
+            }
+        }
+
+        public async Task 撈取歷史個股分K資料()
+        {
+            try
+            {
+                Stopwatch sw = Stopwatch.StartNew();
+                _logger.LogInformation($"撈取歷史個股分K資料 Start, 耗時: {sw.ElapsedMilliseconds}ms");
+
+                var stockNoList = await GetStockNoList(new QueryStockDto() { IsEnabled = true, IsListed = true });
+                var dateNow = DateTime.Now;
+
+                stockNoList = new List<int>() { 2330 };
+
+                foreach (var stockNo in stockNoList)
+                {
+                    Stopwatch sw1 = Stopwatch.StartNew();
+
+                    var req = new HistoryCandlesRequest(
+                                from: DateTime.Now,
+                                to: DateTime.Now,
+                                timeFrame: HistoryTimeFrame.OneMin,
+                                fields: FieldsType.All);
+
+                    _logger.LogInformation($"撈取歷史個股分K資料 Start, 個股: {stockNo}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    var stockHistoricalCandles = await _fobun.GetHistoricalCandlesAsync(stockNo, req);
+
+                    _logger.LogInformation($"撈取歷史個股分K資料 End, 個股: {stockNo}, 耗時: {sw1.ElapsedMilliseconds}ms");
+
+                    if (stockHistoricalCandles == null)
+                    {
+                        // todo 寫入 DB 做Retry
+                        _logger.LogError($"撈取歷史個股分K資料 資料異常, 個股: {stockNo}");
+                        return;
+                    }
+
+                    var data = stockHistoricalCandles.Data.Select(s => new StockMinute()
+                    {
+                        StockNo = stockNo,
+                        Date = s.Date,
+                        TradeVolume = s.Volume,
+                        TradeValue = 0, // 待確認
+                        OpeningPrice = s.Open,
+                        HighestPrice = s.High,
+                        LowestPrice = s.Low,
+                        ClosingPrice = s.Close,
+                        Transaction = 0, // 待確認
+                        CreateDate = dateNow
+                    }).ToList();
+
+                    await _stockRepository.InsertStockMinute(data);
+
+                    _logger.LogInformation($"撈取歷史個股分K資料 寫入DB成功, 個股: {stockNo}, 筆數: {data.Count}, 耗時: {sw1.ElapsedMilliseconds}ms");
+                }
+
+                _logger.LogInformation($"撈取歷史個股分K資料 End, 耗時: {sw.ElapsedMilliseconds}ms");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"撈取歷史個股分K資料 發生錯誤, Error: {ex.Message}.");
             }
         }
 

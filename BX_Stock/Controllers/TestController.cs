@@ -9,20 +9,20 @@ namespace BX_Stock.Controllers
     [ApiController]
     public class TestController : ControllerBase
     {
-        private readonly ITwseAPIService TwseAPIService;
+        private readonly ITwseAPIService _twseAPIService;
 
-        private readonly ITpexAPIService TpexAPIService;
+        private readonly ITpexAPIService _tpexAPIService;
 
-        private readonly IStockService StockService;
+        private readonly StockService _stockService;
 
         public TestController(
             ITwseAPIService twseAPIService,
-            IStockService stockService,
+            StockService stockService,
             ITpexAPIService tpexAPIService)
         {
-            this.TwseAPIService = twseAPIService;
-            this.StockService = stockService;
-            this.TpexAPIService = tpexAPIService;
+            this._twseAPIService = twseAPIService;
+            this._stockService = stockService;
+            this._tpexAPIService = tpexAPIService;
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace BX_Stock.Controllers
             {
                 var date = DateTime.Now;
 
-                await StockService.每日排程更新個股股號(date);
+                await _stockService.每日排程更新個股股號(date);
             }
             catch (Exception ex)
             {
@@ -77,7 +77,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.每日排程撈最新上市個股資訊();
+                await _stockService.每日排程撈最新上市個股資訊();
             }
             catch (Exception ex)
             {
@@ -94,7 +94,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.每日排程撈最新上櫃個股資訊();
+                await _stockService.每日排程撈最新上櫃個股資訊();
             }
             catch (Exception ex)
             {
@@ -111,7 +111,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.重撈上市個股歷史資訊();
+                await _stockService.重撈上市個股歷史資訊();
             }
             catch (Exception ex)
             {
@@ -128,7 +128,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.重撈上櫃個股歷史資訊();
+                await _stockService.重撈上櫃個股歷史資訊();
             }
             catch (Exception ex)
             {
@@ -146,7 +146,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.重撈上市個股日資訊(date);
+                await _stockService.重撈上市個股日資訊(date);
             }
             catch (Exception ex)
             {
@@ -164,7 +164,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.重撈上櫃個股日資訊(date);
+                await _stockService.重撈上櫃個股日資訊(date);
             }
             catch (Exception ex)
             {
@@ -182,7 +182,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.計算移動平均線日資訊(date);
+                await _stockService.計算移動平均線日資訊(date);
             }
             catch (Exception ex)
             {
@@ -199,7 +199,7 @@ namespace BX_Stock.Controllers
         {
             try
             {
-                await StockService.計算移動平均線歷史指標();
+                await _stockService.計算移動平均線歷史指標();
             }
             catch (Exception ex)
             {

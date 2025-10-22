@@ -11,5 +11,6 @@
         public string UserId { get; set; }
         public string UserPwd { get; set; }
         public string CAPath { get; set; }
+        public string CAPwd { get; set; }
     }
 }
